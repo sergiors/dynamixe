@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Type, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 
 import boto3
 
@@ -59,7 +59,7 @@ class DynamoDBClient:
         expr_attr_names: dict | None = None,
         projection_expr: str | None = None,
         raise_on_error: bool = True,
-        exc_cls: Type[Exception] = Exception,
+        exc_cls: type[Exception] = Exception,
         default: Any = None,
     ) -> dict | Any:
         """Get a single item by primary key."""
