@@ -1,5 +1,3 @@
-"""Tests for comparison expressions."""
-
 from dynamixe import ConfigDict, Model
 from dynamixe.expressions import Expression
 

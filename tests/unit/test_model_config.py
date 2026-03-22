@@ -1,5 +1,3 @@
-"""Tests for model configuration methods."""
-
 from dynamixe import ConfigDict, Model
 
 

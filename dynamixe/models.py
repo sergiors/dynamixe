@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from .client import ConfigDict, _get_dynamodb_config
 from .expressions import expr_field
+
+if TYPE_CHECKING:
+    from .expressions import AttrExpression
 
 
 class Model:
@@ -38,6 +41,10 @@ class Model:
             for name in cls.__annotations__.keys():
                 if not name.startswith('_'):
                     setattr(cls, name, expr_field(name))
+
+    if TYPE_CHECKING:
+
+        def __getattr__(cls, name: str) -> AttrExpression: ...
 
     @classmethod
     def get_table(cls) -> str:

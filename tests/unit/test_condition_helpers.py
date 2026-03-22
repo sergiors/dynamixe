@@ -1,5 +1,3 @@
-"""Tests for condition helper methods."""
-
 from dynamixe import ConfigDict, Model
 from dynamixe.expressions import Expression
 

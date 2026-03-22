@@ -1,5 +1,3 @@
-"""Integration tests for Pydantic BaseModel support."""
-
 from typing import Any
 
 from pydantic import BaseModel
@@ -74,7 +72,7 @@ def test_pydantic_query_with_filter(client, settings):
     assert isinstance(result, dict)
     assert 'items' in result
     assert 'count' in result
-    
+
     items = result['items']
     assert len(items) == 1
     assert items[0]['value'] == 'A'

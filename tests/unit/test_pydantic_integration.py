@@ -1,5 +1,3 @@
-"""Tests for Pydantic BaseModel integration."""
-
 from typing import Any
 
 from dynamixe import ConfigDict

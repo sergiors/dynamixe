@@ -1,5 +1,3 @@
-"""Integration tests for dataclass support."""
-
 from dataclasses import dataclass
 
 import pytest
@@ -21,7 +19,6 @@ def test_dataclass_with_dynamodb_config(client, settings):
         sk: str
         value: str
 
-    # Set up expression fields manually for dataclass
     for name in User.__annotations__:
         if not name.startswith('_'):
             setattr(User, name, AttrExpression(name, User))
@@ -55,11 +52,9 @@ def test_dataclass_with_condition(client, settings):
 
     item = Item(id='COND#1', sk='0', data='initial')
 
-    # First put should succeed
     result1 = client.put_item(item, cond_expr=Item.sk.not_exists())
     assert result1
 
-    # Second put with same condition should fail
     item2 = Item(id='COND#1', sk='0', data='updated')
     with pytest.raises(ClientError):
         client.put_item(
