@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import base64
+import json
+import urllib.parse as parse
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypedDict
 
@@ -22,6 +25,12 @@ class ConfigDict(TypedDict, total=False):
     table: str
     partition_key: str | None
     sort_key: str | None
+
+
+class QueryOutput(TypedDict):
+    items: list[dict[str, Any]]
+    count: int
+    last_key: str | None
 
 
 def _get_dynamodb_config(obj: Any) -> ConfigDict | None:
@@ -165,8 +174,10 @@ class DynamoDBClient:
             attrs['ReturnValuesOnConditionCheckFailure'] = return_on_cond_fail
 
         output = self._client.update_item(**attrs)
+
         if return_values:
             return deserialize(output.get('Attributes', {}))
+
         return None
 
     def delete_item(
@@ -265,7 +276,7 @@ class DynamoDBClient:
         scan_index_forward: bool = True,
         exclusive_start_key: str | dict | None = None,
         table_name: str | None = None,
-    ) -> list[dict]:
+    ) -> QueryOutput:
         """Query items with key condition expression."""
         key_cond, key_names, key_values = extract_expression(
             key_expr, expr_attr_names, expr_attr_values
@@ -279,6 +290,7 @@ class DynamoDBClient:
             'KeyConditionExpression': key_cond,
             'ScanIndexForward': scan_index_forward,
         }
+
         if select:
             attrs['Select'] = select
 
@@ -305,7 +317,11 @@ class DynamoDBClient:
 
         output = self._client.query(**attrs)
 
-        return [deserialize(item) for item in output.get('Items', [])]
+        return {
+            'items': [deserialize(item) for item in output.get('Items', [])],
+            'count': output.get('Count', 0),
+            'last_key': _startkey_b64encode(output.get('LastEvaluatedKey')),
+        }
 
     def transact_get(self) -> TransactGet:
         """Create a transactional read operations client."""
@@ -317,7 +333,13 @@ class DynamoDBClient:
 
 
 def _startkey_b64decode(key: str) -> dict:
-    import base64
-    import json
-
     return json.loads(base64.b64decode(key).decode('utf-8'))
+
+
+def _startkey_b64encode(obj: dict[str, Any] | None) -> str | None:
+    if not obj:
+        return None
+
+    json_str = json.dumps(obj)
+    encoded = base64.urlsafe_b64encode(json_str.encode('utf-8')).decode('utf-8')
+    return parse.quote(encoded)

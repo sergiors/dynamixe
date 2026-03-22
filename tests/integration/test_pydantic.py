@@ -66,10 +66,15 @@ def test_pydantic_query_with_filter(client, settings):
     client.put_item(PydanticItem(id='ITEM#1', sk='1', value='B'))
     client.put_item(PydanticItem(id='ITEM#1', sk='2', value='C'))
 
-    items = client.query(
+    result = client.query(
         ExprItem.id == 'ITEM#1',
         filter_expr=ExprItem.value.begins_with('A'),
     )
 
+    assert isinstance(result, dict)
+    assert 'items' in result
+    assert 'count' in result
+    
+    items = result['items']
     assert len(items) == 1
     assert items[0]['value'] == 'A'

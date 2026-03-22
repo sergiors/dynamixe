@@ -11,6 +11,7 @@ Dynamixe is a SQLAlchemy-style DynamoDB ORM with an expression-based API. It pro
 -   **`expressions.py`** - Expression algebra (`Expression`, `AttrExpression`, operators)
 -   **`models.py`** - `Model` base class with descriptor-based attribute access
 -   **`client.py`** - `DynamoDBClient` with ConfigDict pattern
+-   **`keys.py`** - `PrimaryKey`, `SortKey`, `PartitionKey` for key operations
 -   **`types.py`** - Serialization/deserialization utilities
 -   **`transact_get.py`** - Transactional read operations
 -   **`transact_writer.py`** - Transactional write operations
@@ -36,8 +37,6 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from mypy_boto3_dynamodb.client import DynamoDBClient
-else:
-    DynamoDBClient = Any
 
 def func(value: str | None = None) -> dict[str, Any]:
     ...
@@ -56,7 +55,7 @@ def func(value: str | None = None) -> dict[str, Any]:
 -   Keep functions small and focused
 -   Extract repeated logic into private helpers (e.g., `_build_condition_attrs`)
 -   Use descriptive variable names (`transact_op`, `batch_items`, `cond_expr_str`)
--   Add docstrings to helper methods explaining purpose and return values
+-   Add docstrings only for larger scope methods (small helpers can be self-documenting)
 
 ```python
 def _build_condition_attrs(
@@ -112,10 +111,13 @@ def _build_tx_exception(
 -   Test expression logic separately from integration
 -   Use `moto` for DynamoDB mocking
 -   Test both `Model` and Pydantic `BaseModel` patterns
+-   Prefer function-based tests over test classes (avoid wrapping tests in classes)
+-   Add comments only when test logic needs explanation (simple tests don't need comments)
 
 ```python
-def test_attribute_returns_attr_expression(self):
+def test_attribute_returns_attr_expression():
     expr = User.id
+    assert isinstance(expr, AttrExpression)
     assert expr.attr_name == 'id'
 ```
 
@@ -146,39 +148,14 @@ def get_config(cls) -> ConfigDict:
     return cls.model_config
 ```
 
-### 3. New Client Operations
+### 3. New Tests
 
-Add to `DynamoDBClient` in `client.py`:
-
-```python
-def query(self, key_expr: Expression, **kwargs: Any) -> list[dict]:
-    """Query items with key expression."""
-    attrs = {
-        'TableName': kwargs.get('table_name') or self._table_name,
-        'KeyConditionExpression': key_expr.expr,
-    }
-
-    if key_expr.names:
-        attrs['ExpressionAttributeNames'] = key_expr.names
-
-    if key_expr.values:
-        attrs['ExpressionAttributeValues'] = serialize(key_expr.values)
-
-    output = self._client.query(**attrs)
-
-    return [deserialize(item) for item in output.get('Items', [])]
-```
-
-### 4. New Tests
-
-Add to `tests/test_expressions.py` following existing patterns:
+Add to `tests/test_expressions.py` as functions (not classes):
 
 ```python
-def test_feature_works(self):
+def test_feature_works():
     expr = User.id == 'USER#10'
-
     result = some_operation(expr)
-
     assert result is not None
     assert '#id' in result.expr
 ```
@@ -288,7 +265,7 @@ uv run pytest tests/ -k "test_equality"     # Specific test
 -   Maintain separation: expressions (logic) vs client (execution)
 -   Write tests before implementing features (TDD encouraged)
 -   Use type hints for all public APIs
--   Document public methods with docstrings
+-   Add docstrings only for larger scope methods
 -   DRY: Extract repeated logic into private helpers
 
 ## Influences

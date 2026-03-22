@@ -21,10 +21,16 @@ def test_query_with_dict_data(client):
     client.put_item({'id': 'USER#QUERY', 'sk': '1', 'name': 'Ada'})
     client.put_item({'id': 'USER#QUERY', 'sk': '2', 'name': 'Bob'})
 
-    items = client.query(
+    result = client.query(
         User.id == 'USER#QUERY', filter_expr=User.name.begins_with('A')
     )
 
+    assert isinstance(result, dict)
+    assert 'items' in result
+    assert 'count' in result
+    assert 'last_key' in result
+    
+    items = result['items']
     assert len(items) == 2
     assert {item['name'] for item in items} == {'Alice', 'Ada'}
 

@@ -120,12 +120,12 @@ def expr_field(name: str) -> AttrDescriptor:
 
 
 def extract_expression(
-    expr: str | Any | None,
+    expr: str | Expression | None,
     expr_attr_names: dict | None = None,
     expr_attr_values: dict | None = None,
 ) -> tuple[str | None, dict | None, dict | None]:
     """Extract (expr_string, names, values) from Expression or string.
-    
+
     Values are returned as raw Python values, not serialized.
     Serialization happens at the client level when calling boto3.
     """
