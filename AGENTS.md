@@ -11,17 +11,16 @@ Dynamixe is a SQLAlchemy-style DynamoDB ORM with an expression-based API. It pro
 -   **`expressions.py`** - Expression algebra (`Expression`, `AttrExpression`, operators)
 -   **`models.py`** - `Model` base class with descriptor-based attribute access
 -   **`client.py`** - `DynamoDBClient` with ConfigDict pattern
--   **`keys.py`** - `PrimaryKey`, `SortKey`, `PartitionKey` for key operations
 -   **`types.py`** - Serialization/deserialization utilities
 -   **`transact_get.py`** - Transactional read operations
 -   **`transact_writer.py`** - Transactional write operations
 
 ### Design Patterns
 
-1. **Descriptor Pattern** - Model attributes use `AttrDescriptor` to return `AttrExpression` on access
-2. **Expression Algebra** - Operators (`==`, `!=`, `<`, `&`, `|`, `~`) build composable expressions
-3. **ConfigDict Pattern** - Pydantic-compatible configuration via `model_config = ConfigDict(...)`
-4. **Separation of Concerns** - Expressions (logic) separate from Client (execution)
+1.  **Descriptor Pattern** - Model attributes use `AttrDescriptor` to return `AttrExpression` on access
+2.  **Expression Algebra** - Operators (`==`, `!=`, `<`, `&`, `|`, `~`) build composable expressions
+3.  **ConfigDict Pattern** - Pydantic-compatible configuration via `model_config = ConfigDict(...)`
+4.  **Separation of Concerns** - Expressions (logic) separate from Client (execution)
 
 ## Coding Style
 
@@ -29,14 +28,16 @@ Dynamixe is a SQLAlchemy-style DynamoDB ORM with an expression-based API. It pro
 
 -   Always use type hints for function signatures
 -   Use `|` for unions (Python 3.10+): `str | None`
--   Use `TYPE_CHECKING` for circular imports
+-   Use `TYPE_CHECKING` for optional imports (e.g., boto3 stubs)
 -   Export types in `__all__`
 
 ```python
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from dynamixe.client import ConfigDict
+    from mypy_boto3_dynamodb.client import DynamoDBClient
+else:
+    DynamoDBClient = Any
 
 def func(value: str | None = None) -> dict[str, Any]:
     ...
@@ -46,9 +47,26 @@ def func(value: str | None = None) -> dict[str, Any]:
 
 -   **Classes**: PascalCase (`AttrExpression`, `DynamoDBClient`)
 -   **Functions/Methods**: snake_case (`get_item`, `not_exists`)
--   **Private helpers**: Leading underscore (`_combine_exprs`, `_get_dynamodb_config`)
+-   **Private helpers**: Leading underscore (`_combine_exprs`, `_build_condition_attrs`)
 -   **Constants**: UPPER_CASE (`Operator`, `EQ`)
 -   **Type variables**: Single capital letter (`T = TypeVar("T")`)
+
+### Code Organization
+
+-   Keep functions small and focused
+-   Extract repeated logic into private helpers (e.g., `_build_condition_attrs`)
+-   Use descriptive variable names (`transact_op`, `batch_items`, `cond_expr_str`)
+-   Add docstrings to helper methods explaining purpose and return values
+
+```python
+def _build_condition_attrs(
+    cond_expr: str | Expression | None,
+    expr_attr_names: dict | None,
+    expr_attr_values: dict | None,
+) -> dict:
+    """Build DynamoDB attributes for condition expressions."""
+    ...
+```
 
 ### Expression Building
 
@@ -66,13 +84,26 @@ def not_exists(self) -> Expression:
 -   Custom exception classes inherit from `Exception`
 -   Include `reason` dict for debugging
 -   Use `TransactionOperationFailed` for conditional failures
+-   Helper functions for exception building (e.g., `_build_tx_exception`)
 
 ```python
 class TransactionOperationFailed(Exception):
-    def __init__(self, message: str, old_item: dict | None = None) -> None:
+    def __init__(self, message: str, reason: TransactionCanceledReason) -> None:
         super().__init__(message)
-        self.old_item = old_item
-        self.reason = {'old_item': old_item} if old_item else {}
+        self.reason = reason
+
+
+def _build_tx_exception(
+    exc_cls: type[Exception],
+    msg: str,
+    reason: TransactionCanceledReason,
+) -> Exception:
+    """Build an exception with transaction cancellation reason attached."""
+    if issubclass(exc_cls, TransactionOperationFailed):
+        return exc_cls(msg, reason=reason)
+    exc = exc_cls(msg)
+    setattr(exc, '__reason__', reason)
+    return exc
 ```
 
 ### Testing
@@ -83,11 +114,9 @@ class TransactionOperationFailed(Exception):
 -   Test both `Model` and Pydantic `BaseModel` patterns
 
 ```python
-class TestExpressionAccess:
-    def test_attribute_returns_attr_expression(self):
-        expr = User.id
-        assert isinstance(expr, AttrExpression)
-        assert expr.attr_name == 'id'
+def test_attribute_returns_attr_expression(self):
+    expr = User.id
+    assert expr.attr_name == 'id'
 ```
 
 ## Adding New Features
@@ -124,16 +153,19 @@ Add to `DynamoDBClient` in `client.py`:
 ```python
 def query(self, key_expr: Expression, **kwargs: Any) -> list[dict]:
     """Query items with key expression."""
-    from .types import deserialize, serialize
     attrs = {
         'TableName': kwargs.get('table_name') or self._table_name,
         'KeyConditionExpression': key_expr.expr,
     }
+
     if key_expr.names:
         attrs['ExpressionAttributeNames'] = key_expr.names
+
     if key_expr.values:
         attrs['ExpressionAttributeValues'] = serialize(key_expr.values)
+
     output = self._client.query(**attrs)
+
     return [deserialize(item) for item in output.get('Items', [])]
 ```
 
@@ -142,17 +174,13 @@ def query(self, key_expr: Expression, **kwargs: Any) -> list[dict]:
 Add to `tests/test_expressions.py` following existing patterns:
 
 ```python
-class TestNewFeature:
-    def test_feature_works(self):
-        # Arrange
-        expr = User.id == 'USER#10'
+def test_feature_works(self):
+    expr = User.id == 'USER#10'
 
-        # Act
-        result = some_operation(expr)
+    result = some_operation(expr)
 
-        # Assert
-        assert result is not None
-        assert '#id' in result.expr
+    assert result is not None
+    assert '#id' in result.expr
 ```
 
 ## Configuration Patterns
@@ -238,8 +266,10 @@ class User:
 
 -   **boto3** - AWS SDK for DynamoDB client
 -   **pydantic** - Optional, for BaseModel support
+-   **mypy-boto3-dynamodb** - Type stubs for boto3 (optional, via TYPE_CHECKING)
 -   **moto** - Testing, for DynamoDB mocking
 -   **pytest** - Testing framework
+-   **jmespath** - JSON extraction for error parsing
 
 ## Running Tests
 
@@ -259,6 +289,7 @@ uv run pytest tests/ -k "test_equality"     # Specific test
 -   Write tests before implementing features (TDD encouraged)
 -   Use type hints for all public APIs
 -   Document public methods with docstrings
+-   DRY: Extract repeated logic into private helpers
 
 ## Influences
 
@@ -269,9 +300,9 @@ uv run pytest tests/ -k "test_equality"     # Specific test
 
 ## Future Directions
 
-1. **Query API** - Expression-based `client.query(User.id == 'USER#10')`
-2. **Update expressions** - `User.name.set('New')`, `User.count.add(1)`
-3. **Batch operations** - `batch_get_item`, `batch_write_item`
-4. **Index support** - GSI/LSI query helpers
-5. **Pagination** - Cursor-based iteration
-6. **Async support** - `AsyncDynamoDBClient`
+1.  **Query API** - Expression-based `client.query(User.id == 'USER#10')`
+2.  **Update expressions** - `User.name.set('New')`, `User.count.add(1)`
+3.  **Batch operations** - `batch_get_item`, `batch_write_item`
+4.  **Index support** - GSI/LSI query helpers
+5.  **Pagination** - Cursor-based iteration
+6.  **Async support** - `AsyncDynamoDBClient`
