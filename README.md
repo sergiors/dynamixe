@@ -58,7 +58,6 @@ client = DynamoDBClient(table_name='users')
 client.put_item(
     user,
     cond_expr=User.sk.not_exists(),
-    expr_attr_names=User.sk.not_exists().names,
 )
 ```
 
