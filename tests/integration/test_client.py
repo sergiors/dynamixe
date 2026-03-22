@@ -1,7 +1,4 @@
-"""Integration tests for plain dict object support."""
-
 from dynamixe import ConfigDict, Model
-from dynamixe.expressions import AttrExpression
 
 
 class User(Model):
@@ -64,7 +61,9 @@ def test_scan_with_filter_expr(client):
     client.put_item({'id': 'USER#2', 'sk': '0', 'name': 'Bob'})
     client.put_item({'id': 'USER#3', 'sk': '0', 'name': 'Charlie'})
 
-    items = client.scan(filter_expr=User.name.begins_with('A'))
+    items = client.scan(
+        filter_expr=User.name.begins_with('A'),
+    )
 
     assert len(items) == 1
     assert items[0]['name'] == 'Alice'

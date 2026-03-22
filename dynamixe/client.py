@@ -5,8 +5,10 @@ from typing import TYPE_CHECKING, Any, Type, TypedDict
 
 import boto3
 
-from .expressions import Expression
-from .types import deserialize, normalize_expression, serialize, to_dict
+from .expressions import Expression, extract_expression
+from .transact_get import TransactGet
+from .transact_writer import TransactWriter
+from .types import deserialize, serialize, to_dict
 
 if TYPE_CHECKING:
     from mypy_boto3_dynamodb.client import DynamoDBClient as Boto3DynamoDBClient
@@ -103,18 +105,18 @@ class DynamoDBClient:
             'TableName': table_name or self._table_name,
             'Item': serialize(data),
         }
-        condition_expr, merged_names, merged_values = normalize_expression(
+        cond, names, values = extract_expression(
             cond_expr, expr_attr_names, expr_attr_values
         )
 
-        if condition_expr:
-            attrs['ConditionExpression'] = condition_expr
+        if cond:
+            attrs['ConditionExpression'] = cond
 
-        if merged_names:
-            attrs['ExpressionAttributeNames'] = merged_names
+        if names:
+            attrs['ExpressionAttributeNames'] = names
 
-        if merged_values:
-            attrs['ExpressionAttributeValues'] = merged_values
+        if values:
+            attrs['ExpressionAttributeValues'] = serialize(values)
 
         if return_values:
             attrs['ReturnValues'] = return_values
@@ -143,18 +145,18 @@ class DynamoDBClient:
             'UpdateExpression': update_expr,
         }
 
-        condition_expr, merged_names, merged_values = normalize_expression(
+        cond, names, values = extract_expression(
             cond_expr, expr_attr_names, expr_attr_values
         )
 
-        if condition_expr:
-            attrs['ConditionExpression'] = condition_expr
+        if cond:
+            attrs['ConditionExpression'] = cond
 
-        if merged_names:
-            attrs['ExpressionAttributeNames'] = merged_names
+        if names:
+            attrs['ExpressionAttributeNames'] = names
 
-        if merged_values:
-            attrs['ExpressionAttributeValues'] = merged_values
+        if values:
+            attrs['ExpressionAttributeValues'] = serialize(values)
 
         if return_values:
             attrs['ReturnValues'] = return_values
@@ -184,18 +186,18 @@ class DynamoDBClient:
             'Key': serialize(key),
         }
 
-        condition_expr, merged_names, merged_values = normalize_expression(
+        cond, names, values = extract_expression(
             cond_expr, expr_attr_names, expr_attr_values
         )
 
-        if condition_expr:
-            attrs['ConditionExpression'] = condition_expr
+        if cond:
+            attrs['ConditionExpression'] = cond
 
-        if merged_names:
-            attrs['ExpressionAttributeNames'] = merged_names
+        if names:
+            attrs['ExpressionAttributeNames'] = names
 
-        if merged_values:
-            attrs['ExpressionAttributeValues'] = merged_values
+        if values:
+            attrs['ExpressionAttributeValues'] = serialize(values)
 
         if return_values:
             attrs['ReturnValues'] = return_values
@@ -217,7 +219,7 @@ class DynamoDBClient:
         table_name: str | None = None,
     ) -> list[dict]:
         """Scan items with optional filter expression."""
-        filter_condition_expr, filter_names, filter_values = normalize_expression(
+        filter_cond, names, values = extract_expression(
             filter_expr, expr_attr_names, expr_attr_values
         )
 
@@ -228,11 +230,11 @@ class DynamoDBClient:
         if limit:
             attrs['Limit'] = limit
 
-        if filter_names:
-            attrs['ExpressionAttributeNames'] = filter_names
+        if names:
+            attrs['ExpressionAttributeNames'] = names
 
-        if filter_values:
-            attrs['ExpressionAttributeValues'] = filter_values
+        if values:
+            attrs['ExpressionAttributeValues'] = serialize(values)
 
         if exclusive_start_key:
             if isinstance(exclusive_start_key, str):
@@ -240,13 +242,14 @@ class DynamoDBClient:
             else:
                 attrs['ExclusiveStartKey'] = exclusive_start_key
 
-        if filter_condition_expr:
-            attrs['FilterExpression'] = filter_condition_expr
+        if filter_cond:
+            attrs['FilterExpression'] = filter_cond
 
         if projection_expr:
             attrs['ProjectionExpression'] = projection_expr
 
         output = self._client.scan(**attrs)
+
         return [deserialize(item) for item in output.get('Items', [])]
 
     def query(
@@ -264,18 +267,16 @@ class DynamoDBClient:
         table_name: str | None = None,
     ) -> list[dict]:
         """Query items with key condition expression."""
-        from .types import deserialize
-
-        key_condition_expr, key_names, key_values = normalize_expression(
+        key_cond, key_names, key_values = extract_expression(
             key_expr, expr_attr_names, expr_attr_values
         )
-        filter_condition_expr, filter_names, filter_values = normalize_expression(
+        filter_cond, filter_names, filter_values = extract_expression(
             filter_expr, key_names, key_values
         )
 
         attrs: dict[str, Any] = {
             'TableName': table_name or self._table_name,
-            'KeyConditionExpression': key_condition_expr,
+            'KeyConditionExpression': key_cond,
             'ScanIndexForward': scan_index_forward,
         }
         if select:
@@ -288,7 +289,7 @@ class DynamoDBClient:
             attrs['ExpressionAttributeNames'] = filter_names
 
         if filter_values:
-            attrs['ExpressionAttributeValues'] = filter_values
+            attrs['ExpressionAttributeValues'] = serialize(filter_values)
 
         if exclusive_start_key:
             if isinstance(exclusive_start_key, str):
@@ -296,22 +297,27 @@ class DynamoDBClient:
             else:
                 attrs['ExclusiveStartKey'] = exclusive_start_key
 
-        if filter_condition_expr:
-            attrs['FilterExpression'] = filter_condition_expr
+        if filter_cond:
+            attrs['FilterExpression'] = filter_cond
 
         if projection_expr:
             attrs['ProjectionExpression'] = projection_expr
 
         output = self._client.query(**attrs)
+
         return [deserialize(item) for item in output.get('Items', [])]
 
     def transact_get(self) -> TransactGet:
         """Create a transactional read operations client."""
-        from .transact_get import TransactGet
         return TransactGet(self._table_name, self._client)
+
+    def transact_writer(self) -> TransactWriter:
+        """Create a transactional write operations client."""
+        return TransactWriter(self._table_name, self._client)
 
 
 def _startkey_b64decode(key: str) -> dict:
     import base64
     import json
+
     return json.loads(base64.b64decode(key).decode('utf-8'))

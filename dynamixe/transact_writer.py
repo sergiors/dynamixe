@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from botocore.exceptions import ClientError
 
-from .expressions import Expression
-from .types import normalize_expression, serialize
+from .expressions import Expression, extract_expression
+from .types import serialize
 
 if TYPE_CHECKING:
     from mypy_boto3_dynamodb.client import DynamoDBClient as Boto3DynamoDBClient
@@ -25,7 +25,7 @@ class TransactionOperationFailed(Exception):
 class TransactionCanceledException(Exception):
     """Exception for cancelled transactions."""
 
-    def __init__(self, reasons: List[Any]) -> None:
+    def __init__(self, reasons: list[Any]) -> None:
         super().__init__('Transaction cancelled')
         self.reasons = reasons
 
@@ -44,7 +44,7 @@ class TransactWriter:
         self._client = client
         self._flush_amount = flush_amount
         self._fail_fast = fail_fast
-        self._operations: List[dict] = []
+        self._operations: list[dict] = []
 
     def put(
         self,
@@ -61,7 +61,7 @@ class TransactWriter:
             },
         }
 
-        condition_expr, expr_attr_names, expr_attr_values = normalize_expression(
+        condition_expr, expr_attr_names, expr_attr_values = extract_expression(
             cond_expr
         )
 
@@ -96,7 +96,10 @@ class TransactWriter:
             reasons: list[Any] = []
 
             if isinstance(response, dict):
-                reasons = cast(List[Any], response.get('CancellationReasons', []))
+                reasons = cast(
+                    list[Any],
+                    response.get('CancellationReasons', []),
+                )
 
             raise TransactionCanceledException(reasons) from e
 

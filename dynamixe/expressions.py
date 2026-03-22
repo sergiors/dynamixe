@@ -3,8 +3,6 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Generic, TypeVar
 
-from .types import serialize
-
 
 class Operator(Enum):
     EQ = '='
@@ -83,7 +81,6 @@ class AttrExpression(Expression):
 class ComparisonExpression(Expression):
     def __init__(self, left: AttrExpression, op: Operator, right: Any):
         vk = f':{left.attr_name}_{op.name.lower()}'
-        sv = serialize({vk: right})[vk]
 
         # Store raw value for key extraction
         self.raw_value = right
@@ -92,7 +89,7 @@ class ComparisonExpression(Expression):
         super().__init__(
             f'{left.expr} {op.value} {vk}',
             dict(left.names),
-            {**dict(left.values or {}), vk: sv},
+            {**dict(left.values or {}), vk: right},
         )
 
 
@@ -120,3 +117,24 @@ class AttrDescriptor(Generic[T]):
 
 def expr_field(name: str) -> AttrDescriptor:
     return AttrDescriptor(name)
+
+
+def extract_expression(
+    expr: str | Any | None,
+    expr_attr_names: dict | None = None,
+    expr_attr_values: dict | None = None,
+) -> tuple[str | None, dict | None, dict | None]:
+    """Extract (expr_string, names, values) from Expression or string.
+    
+    Values are returned as raw Python values, not serialized.
+    Serialization happens at the client level when calling boto3.
+    """
+    names = dict(expr_attr_names or {})
+    values = dict(expr_attr_values or {})
+
+    if isinstance(expr, Expression):
+        names.update(expr.names or {})
+        values.update(expr.values or {})
+        expr = expr.expr
+
+    return expr or None, names or None, values or None

@@ -13,3 +13,8 @@ def client(settings, boto3_dynamodb_client):
 @pytest.fixture
 def transact_get(client):
     return client.transact_get()
+
+
+@pytest.fixture
+def transact_writer(client):
+    return client.transact_writer()
