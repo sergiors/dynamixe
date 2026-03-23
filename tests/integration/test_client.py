@@ -1,6 +1,7 @@
 import pytest
 
 from dynamixe import ConfigDict, Model
+from dynamixe.client import DynamoDBClient
 
 
 class User(Model):
@@ -10,14 +11,14 @@ class User(Model):
     name: str
 
 
-def test_put_item_with_dict(client):
+def test_put_item_with_dict(client: DynamoDBClient):
     item = {'id': 'USER#PUT', 'sk': '0', 'name': 'Put User'}
     client.put_item(item, cond_expr=User.sk.not_exists())
     stored = client.get_item({'id': 'USER#PUT', 'sk': '0'})
     assert stored['name'] == 'Put User'
 
 
-def test_query_with_dict_data(client):
+def test_query_with_dict_data(client: DynamoDBClient):
     client.put_item({'id': 'USER#QUERY', 'sk': '0', 'name': 'Alice'})
     client.put_item({'id': 'USER#QUERY', 'sk': '1', 'name': 'Ada'})
     client.put_item({'id': 'USER#QUERY', 'sk': '2', 'name': 'Bob'})
@@ -31,7 +32,7 @@ def test_query_with_dict_data(client):
     assert {item['name'] for item in items} == {'Alice', 'Ada'}
 
 
-def test_update_item_with_dict(client):
+def test_update_item_with_dict(client: DynamoDBClient):
     client.put_item({'id': 'USER#UPDATE', 'sk': '0', 'name': 'Before'})
 
     output = client.update_item(
@@ -47,7 +48,7 @@ def test_update_item_with_dict(client):
     assert output['name'] == 'After'
 
 
-def test_scan_returns_all_items(client):
+def test_scan_returns_all_items(client: DynamoDBClient):
     client.put_item({'id': 'USER#1', 'sk': '0', 'name': 'Alice'})
     client.put_item({'id': 'USER#2', 'sk': '0', 'name': 'Bob'})
     client.put_item({'id': 'USER#3', 'sk': '0', 'name': 'Charlie'})
@@ -58,7 +59,7 @@ def test_scan_returns_all_items(client):
     assert {item['name'] for item in items} == {'Alice', 'Bob', 'Charlie'}
 
 
-def test_scan_with_filter_expr(client):
+def test_scan_with_filter_expr(client: DynamoDBClient):
     client.put_item({'id': 'USER#1', 'sk': '0', 'name': 'Alice'})
     client.put_item({'id': 'USER#2', 'sk': '0', 'name': 'Bob'})
     client.put_item({'id': 'USER#3', 'sk': '0', 'name': 'Charlie'})
@@ -71,7 +72,7 @@ def test_scan_with_filter_expr(client):
     assert items[0]['name'] == 'Alice'
 
 
-def test_scan_with_limit(client):
+def test_scan_with_limit(client: DynamoDBClient):
     client.put_item({'id': 'USER#1', 'sk': '0', 'name': 'Alice'})
     client.put_item({'id': 'USER#2', 'sk': '0', 'name': 'Bob'})
     client.put_item({'id': 'USER#3', 'sk': '0', 'name': 'Charlie'})
@@ -81,7 +82,7 @@ def test_scan_with_limit(client):
     assert len(items) == 2
 
 
-def test_scan_with_projection_expr(client):
+def test_scan_with_projection_expr(client: DynamoDBClient):
     client.put_item(
         {'id': 'USER#1', 'sk': '0', 'name': 'Alice', 'email': 'alice@example.com'}
     )
@@ -96,7 +97,7 @@ def test_scan_with_projection_expr(client):
     assert 'email' not in items[0]
 
 
-def test_scan_with_expression_filter(client):
+def test_scan_with_expression_filter(client: DynamoDBClient):
     client.put_item({'id': 'USER#1', 'sk': '0', 'name': 'Alice'})
     client.put_item({'id': 'USER#2', 'sk': '0', 'name': 'Bob'})
     client.put_item({'id': 'USER#3', 'sk': '0', 'name': 'Charlie'})
@@ -109,11 +110,11 @@ def test_scan_with_expression_filter(client):
     assert names == {'Alice', 'Charlie'}
 
 
-def test_delete_item_basic(client):
+def test_delete_item_basic(client: DynamoDBClient):
     client.put_item({'id': 'USER#DELETE', 'sk': '0', 'name': 'To Delete'})
 
-    stored = client.get_item({'id': 'USER#DELETE', 'sk': '0'})
-    assert stored['name'] == 'To Delete'
+    stored = client.get_item({'id': 'USER#DELETE', 'sk': '0'}).jmespath('name')
+    assert stored == 'To Delete'
 
     result = client.delete_item({'id': 'USER#DELETE', 'sk': '0'})
     assert result is None
@@ -122,7 +123,7 @@ def test_delete_item_basic(client):
     assert deleted is None
 
 
-def test_delete_item_with_condition(client):
+def test_delete_item_with_condition(client: DynamoDBClient):
     client.put_item({'id': 'USER#DEL_COND', 'sk': '0', 'name': 'Conditional'})
 
     with pytest.raises(Exception):
@@ -146,7 +147,7 @@ def test_delete_item_with_condition(client):
     assert deleted is None
 
 
-def test_delete_item_with_return_values(client):
+def test_delete_item_with_return_values(client: DynamoDBClient):
     client.put_item({'id': 'USER#DEL_RET', 'sk': '0', 'name': 'Return Test'})
 
     result = client.delete_item(

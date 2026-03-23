@@ -1,4 +1,5 @@
 from dynamixe import ConfigDict, Model
+from dynamixe.client import DynamoDBClient
 
 
 class User(Model):
@@ -8,7 +9,7 @@ class User(Model):
     name: str
 
 
-def test_query_with_between_on_sort_key(client):
+def test_query_with_between_on_sort_key(client: DynamoDBClient):
     # Create items with different sort keys (zero-padded for lexicographic ordering)
     client.put_item({'id': 'USER#1', 'sk': '00', 'name': 'Zero'})
     client.put_item({'id': 'USER#1', 'sk': '10', 'name': 'Alice'})
@@ -28,7 +29,7 @@ def test_query_with_between_on_sort_key(client):
     assert names == {'Alice', 'Bob', 'Charlie'}
 
 
-def test_query_with_between_exclusive_bounds(client):
+def test_query_with_between_exclusive_bounds(client: DynamoDBClient):
     client.put_item({'id': 'USER#2', 'sk': '000', 'name': 'Zero'})
     client.put_item({'id': 'USER#2', 'sk': '050', 'name': 'Fifty'})
     client.put_item({'id': 'USER#2', 'sk': '100', 'name': 'Hundred'})
@@ -43,7 +44,7 @@ def test_query_with_between_exclusive_bounds(client):
     assert {item['name'] for item in items} == {'Zero', 'Fifty', 'Hundred'}
 
 
-def test_query_with_between_returns_subset(client):
+def test_query_with_between_returns_subset(client: DynamoDBClient):
     client.put_item({'id': 'USER#3', 'sk': '001', 'name': 'One'})
     client.put_item({'id': 'USER#3', 'sk': '005', 'name': 'Five'})
     client.put_item({'id': 'USER#3', 'sk': '010', 'name': 'Ten'})
@@ -61,7 +62,7 @@ def test_query_with_between_returns_subset(client):
     assert names == {'Five', 'Ten', 'Fifteen'}
 
 
-def test_between_with_string_sort_keys(client):
+def test_between_with_string_sort_keys(client: DynamoDBClient):
     client.put_item({'id': 'USER#4', 'sk': '2024-01-01', 'name': 'Jan'})
     client.put_item({'id': 'USER#4', 'sk': '2024-06-01', 'name': 'Jun'})
     client.put_item({'id': 'USER#4', 'sk': '2024-12-01', 'name': 'Dec'})
@@ -78,7 +79,7 @@ def test_between_with_string_sort_keys(client):
     assert {item['name'] for item in items} == {'Jan', 'Jun', 'Dec'}
 
 
-def test_between_empty_result(client):
+def test_between_empty_result(client: DynamoDBClient):
     client.put_item({'id': 'USER#5', 'sk': '100', 'name': 'Hundred'})
     client.put_item({'id': 'USER#5', 'sk': '200', 'name': 'Two Hundred'})
 

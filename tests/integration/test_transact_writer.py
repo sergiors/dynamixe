@@ -1,6 +1,8 @@
 import pytest
 
 from dynamixe import ConfigDict, Model, TransactionOperationFailed
+from dynamixe.client import DynamoDBClient
+from dynamixe.transact_writer import TransactWriter
 
 
 class User(Model):
@@ -12,7 +14,10 @@ class User(Model):
     status: str = 'inactive'
 
 
-def test_transact_writer_put_multiple_items(client, transact_writer):
+def test_transact_writer_put_multiple_items(
+    client: DynamoDBClient,
+    transact_writer: TransactWriter,
+):
     item1 = {'id': 'USER#1', 'sk': '0', 'name': 'Alice'}
     item2 = {'id': 'USER#2', 'sk': '0', 'name': 'Bob'}
 
@@ -26,7 +31,10 @@ def test_transact_writer_put_multiple_items(client, transact_writer):
     assert result2['name'] == 'Bob'
 
 
-def test_transact_writer_put_with_expression_condition(client, transact_writer):
+def test_transact_writer_put_with_expression_condition(
+    client: DynamoDBClient,
+    transact_writer: TransactWriter,
+):
     client.put_item({'id': 'USER#EXIST', 'sk': '0', 'name': 'Existing'})
 
     with pytest.raises(Exception):
@@ -40,7 +48,10 @@ def test_transact_writer_put_with_expression_condition(client, transact_writer):
     assert result['name'] == 'Existing'
 
 
-def test_transact_writer_delete_with_expression_condition(client, transact_writer):
+def test_transact_writer_delete_with_expression_condition(
+    client: DynamoDBClient,
+    transact_writer: TransactWriter,
+):
     client.put_item({'id': 'USER#DEL', 'sk': '0', 'name': 'To Delete'})
 
     with transact_writer as tx:
@@ -54,7 +65,10 @@ def test_transact_writer_delete_with_expression_condition(client, transact_write
         client.get_item({'id': 'USER#DEL', 'sk': '0'})
 
 
-def test_transact_writer_delete_with_expression_fails(client, transact_writer):
+def test_transact_writer_delete_with_expression_fails(
+    client: DynamoDBClient,
+    transact_writer: TransactWriter,
+):
     client.put_item({'id': 'USER#NDEL', 'sk': '0', 'name': 'Keep'})
 
     with pytest.raises(Exception):
@@ -68,7 +82,10 @@ def test_transact_writer_delete_with_expression_fails(client, transact_writer):
     assert result is not None
 
 
-def test_transact_writer_update_with_expression_condition(client, transact_writer):
+def test_transact_writer_update_with_expression_condition(
+    client: DynamoDBClient,
+    transact_writer: TransactWriter,
+):
     client.put_item({'id': 'USER#UPD', 'sk': '0', 'name': 'Original', 'count': 0})
 
     # Update with expression condition
@@ -85,7 +102,10 @@ def test_transact_writer_update_with_expression_condition(client, transact_write
     assert result['name'] == 'Updated'
 
 
-def test_transact_writer_update_with_expression_fails(client, transact_writer):
+def test_transact_writer_update_with_expression_fails(
+    client: DynamoDBClient,
+    transact_writer: TransactWriter,
+):
     client.put_item({'id': 'USER#NUD', 'sk': '0', 'name': 'Keep', 'count': 5})
 
     with pytest.raises(Exception):
@@ -102,7 +122,10 @@ def test_transact_writer_update_with_expression_fails(client, transact_writer):
     assert result['name'] == 'Keep'
 
 
-def test_transact_writer_condition_check_with_expression(client, transact_writer):
+def test_transact_writer_condition_check_with_expression(
+    client: DynamoDBClient,
+    transact_writer: TransactWriter,
+):
     client.put_item({'id': 'USER#COND', 'sk': '0', 'name': 'Original'})
 
     with transact_writer as tx:
@@ -112,7 +135,10 @@ def test_transact_writer_condition_check_with_expression(client, transact_writer
         )
 
 
-def test_transact_writer_condition_check_with_expression_fails(client, transact_writer):
+def test_transact_writer_condition_check_with_expression_fails(
+    client: DynamoDBClient,
+    transact_writer: TransactWriter,
+):
     client.put_item({'id': 'USER#CFAIL', 'sk': '0', 'name': 'Original'})
 
     with pytest.raises(Exception):
@@ -123,7 +149,10 @@ def test_transact_writer_condition_check_with_expression_fails(client, transact_
             )
 
 
-def test_transact_writer_with_combined_expressions(client, transact_writer):
+def test_transact_writer_with_combined_expressions(
+    client: DynamoDBClient,
+    transact_writer: TransactWriter,
+):
     client.put_item({'id': 'USER#COMBO', 'sk': '0', 'name': 'Combo', 'count': 1})
 
     with transact_writer as tx:
@@ -136,7 +165,10 @@ def test_transact_writer_with_combined_expressions(client, transact_writer):
     assert result['name'] == 'Combo Updated'
 
 
-def test_transact_writer_with_or_expression(client, transact_writer):
+def test_transact_writer_with_or_expression(
+    client: DynamoDBClient,
+    transact_writer: TransactWriter,
+):
     client.put_item({'id': 'USER#OR', 'sk': '0', 'name': 'Or Test', 'status': 'active'})
 
     with transact_writer as tx:
@@ -149,7 +181,10 @@ def test_transact_writer_with_or_expression(client, transact_writer):
     assert result['name'] == 'Or Updated'
 
 
-def test_transact_writer_with_custom_exception(client, transact_writer):
+def test_transact_writer_with_custom_exception(
+    client: DynamoDBClient,
+    transact_writer: TransactWriter,
+):
     client.put_item({'id': 'USER#1', 'sk': '0', 'name': 'Alice'})
     client.put_item({'id': 'EMAIL', 'sk': 'alice@example.com'})
 
@@ -170,7 +205,10 @@ def test_transact_writer_with_custom_exception(client, transact_writer):
     assert result['name'] == 'Alice'
 
 
-def test_transact_writer_pytest_expression_access(client, transact_writer):
+def test_transact_writer_pytest_expression_access(
+    client: DynamoDBClient,
+    transact_writer: TransactWriter,
+):
     """Test that expression access via model attributes works correctly."""
     expr = User.id
     assert expr.attr_name == 'id'

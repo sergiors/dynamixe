@@ -4,10 +4,11 @@ import pytest
 from botocore.exceptions import ClientError
 
 from dynamixe import ConfigDict
+from dynamixe.client import DynamoDBClient
 from dynamixe.expressions import AttrExpression
 
 
-def test_dataclass_with_dynamodb_config(client, settings):
+def test_dataclass_with_dynamodb_config(client: DynamoDBClient, settings):
     @dataclass
     class User:
         __dynamodb_config__ = ConfigDict(
@@ -33,7 +34,7 @@ def test_dataclass_with_dynamodb_config(client, settings):
     assert stored['value'] == 'test'
 
 
-def test_dataclass_with_condition(client, settings):
+def test_dataclass_with_condition(client: DynamoDBClient, settings):
     @dataclass
     class Item:
         __dynamodb_config__ = ConfigDict(

@@ -4,7 +4,7 @@ import base64
 import json
 import urllib.parse as parse
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict, TypeVar
 
 import boto3
 import jmespath
@@ -27,6 +27,8 @@ else:
     ReturnValueType = Any
     SelectType = Any
 
+T = TypeVar('T')
+
 
 class ConfigDict(TypedDict, total=False):
     """Configuration for DynamoDB mapping."""
@@ -34,6 +36,20 @@ class ConfigDict(TypedDict, total=False):
     table: str
     partition_key: str | None
     sort_key: str | None
+
+
+class ItemOutput(dict):
+    def jmespath(self, expr: str) -> Any:
+        """Apply JMESPath expression to result list.
+
+        Args:
+            expr: JMESPath expression (e.g., '[*].name', '[0]', '[?active == `true`]').
+
+        Returns:
+            Transformed result from JMESPath search.
+            Returns raw JMESPath output (list, dict, scalar) without wrapping.
+        """
+        return jmespath.search(expr, self)
 
 
 class QueryOutput(dict):
@@ -97,8 +113,8 @@ class DynamoDBClient:
         projection_expr: str | None = None,
         raise_on_error: bool = True,
         exc_cls: type[Exception] = Exception,
-        default: Any = None,
-    ) -> dict | Any:
+        default: T = None,
+    ) -> ItemOutput | T:
         """Get a single item by primary key."""
         attrs: dict[str, Any] = {
             'TableName': table_name or self._table_name,
@@ -117,7 +133,7 @@ class DynamoDBClient:
         if raise_on_error and not item:
             raise exc_cls(f'Item not found ({key!r})')
 
-        return item or default
+        return ItemOutput(item) or default
 
     def put_item(
         self,

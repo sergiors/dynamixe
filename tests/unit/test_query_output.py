@@ -2,7 +2,10 @@ from dynamixe.client import QueryOutput
 
 
 def test_query_output_is_dict_like():
-    items = [{'id': 'USER#1', 'name': 'Alice'}, {'id': 'USER#2', 'name': 'Bob'}]
+    items = [
+        {'id': 'USER#1', 'name': 'Alice'},
+        {'id': 'USER#2', 'name': 'Bob'},
+    ]
     output = QueryOutput(items=items, count=2, last_key=None)
 
     assert isinstance(output, dict)

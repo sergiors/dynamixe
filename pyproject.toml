@@ -43,7 +43,6 @@ pydantic = ["pydantic>=2.0"]
 [dependency-groups]
 dev = [
     "boto3-stubs[essential]>=1.42.73",
-    "moto>=5.1.22",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     "ruff>=0.15.7",
@@ -80,6 +79,3 @@ select = ["E", "F", "I", "W"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["dynamixe"]
-
-[tool.pyright]
-reportAttributeAccessIssue = "none"

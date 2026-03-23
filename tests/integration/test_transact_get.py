@@ -1,5 +1,6 @@
 from dynamixe import ConfigDict, Model
-from dynamixe.transact_get import TransactGetResult, get
+from dynamixe.client import DynamoDBClient
+from dynamixe.transact_get import TransactGet, TransactGetResult, get
 
 
 class User(Model):
@@ -14,7 +15,7 @@ class User(Model):
     email: str
 
 
-def test_get_items_multiple_keys(client, transact_get):
+def test_get_items_multiple_keys(client: DynamoDBClient, transact_get: TransactGet):
     client.put_item(
         {
             'id': 'USER#A',
@@ -43,7 +44,7 @@ def test_get_items_multiple_keys(client, transact_get):
     assert result[1]['email'] == 'bob@example.com'
 
 
-def test_get_items_single_key(client, transact_get):
+def test_get_items_single_key(client: DynamoDBClient, transact_get: TransactGet):
     client.put_item({'id': 'USER#10', 'sk': '0', 'name': 'Single'})
     client.put_item(
         {
@@ -73,7 +74,7 @@ def test_get_items_returns_empty_list_when_none_found(transact_get):
     assert result == []
 
 
-def test_get_items_with_project(client, transact_get):
+def test_get_items_with_project(client: DynamoDBClient, transact_get: TransactGet):
     client.put_item(
         {
             'id': 'USER#PROJ',
@@ -99,7 +100,9 @@ def test_get_items_with_project(client, transact_get):
     assert results[0]['name'] == 'Projected User'
 
 
-def test_get_items_with_model_expression(client, transact_get):
+def test_get_items_with_model_expression(
+    client: DynamoDBClient, transact_get: TransactGet
+):
     client.put_item(
         {
             'id': 'USER#EXPR',
@@ -118,7 +121,9 @@ def test_get_items_with_model_expression(client, transact_get):
     assert results[0]['name'] == 'Expression User'
 
 
-def test_get_items_with_project_on_expression(client, transact_get):
+def test_get_items_with_project_on_expression(
+    client: DynamoDBClient, transact_get: TransactGet
+):
     client.put_item(
         {
             'id': 'USER#PROJ2',
@@ -143,7 +148,9 @@ def test_get_items_with_project_on_expression(client, transact_get):
     assert results[0]['name'] == 'Projected Expr'
 
 
-def test_get_items_with_jmespath_extract_all_names(client, transact_get):
+def test_get_items_with_jmespath_extract_all_names(
+    client: DynamoDBClient, transact_get: TransactGet
+):
     client.put_item(
         {
             'id': 'USER#JMESPATH1',
@@ -169,7 +176,9 @@ def test_get_items_with_jmespath_extract_all_names(client, transact_get):
     assert result == ['User One', 'User Two']
 
 
-def test_get_items_with_jmespath_first_item(client, transact_get):
+def test_get_items_with_jmespath_first_item(
+    client: DynamoDBClient, transact_get: TransactGet
+):
     client.put_item(
         {
             'id': 'USER#FIRST',
@@ -200,7 +209,9 @@ def test_get_items_with_jmespath_first_item(client, transact_get):
     }
 
 
-def test_get_items_with_jmespath_filter(client, transact_get):
+def test_get_items_with_jmespath_filter(
+    client: DynamoDBClient, transact_get: TransactGet
+):
     client.put_item(
         {
             'id': 'USER#FILTER1',
@@ -226,7 +237,9 @@ def test_get_items_with_jmespath_filter(client, transact_get):
     assert result == ['Alice']
 
 
-def test_get_items_without_jmespath_unchanged(client, transact_get):
+def test_get_items_without_jmespath_unchanged(
+    client: DynamoDBClient, transact_get: TransactGet
+):
     client.put_item(
         {
             'id': 'USER#NOJMESPATH',
@@ -246,7 +259,9 @@ def test_get_items_without_jmespath_unchanged(client, transact_get):
     assert results[0]['email'] == 'nojmespath@example.com'
 
 
-def test_get_items_with_jmespath_nested_projection(client, transact_get):
+def test_get_items_with_jmespath_nested_projection(
+    client: DynamoDBClient, transact_get: TransactGet
+):
     client.put_item(
         {
             'id': 'USER#NESTED1',
@@ -272,7 +287,9 @@ def test_get_items_with_jmespath_nested_projection(client, transact_get):
     assert result == ['Senior', 'Junior']
 
 
-def test_get_items_result_is_iterable(client, transact_get):
+def test_get_items_result_is_iterable(
+    client: DynamoDBClient, transact_get: TransactGet
+):
     client.put_item(
         {
             'id': 'USER#ITER1',
@@ -297,7 +314,9 @@ def test_get_items_result_is_iterable(client, transact_get):
     assert names == ['Iter 1', 'Iter 2']
 
 
-def test_get_items_result_supports_indexing(client, transact_get):
+def test_get_items_result_supports_indexing(
+    client: DynamoDBClient, transact_get: TransactGet
+):
     client.put_item(
         {
             'id': 'USER#IDX',
