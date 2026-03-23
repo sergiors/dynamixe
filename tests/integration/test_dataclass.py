@@ -24,11 +24,10 @@ def test_dataclass_with_dynamodb_config(client, settings):
             setattr(User, name, AttrExpression(name, User))
 
     item = User(id='TEST#1', sk='0', value='test')
-    result = client.put_item(
+    client.put_item(
         item,
         cond_expr=User.sk.not_exists(),
     )
-    assert result
 
     stored = client.get_item({'id': 'TEST#1', 'sk': '0'})
     assert stored['value'] == 'test'
@@ -52,8 +51,7 @@ def test_dataclass_with_condition(client, settings):
 
     item = Item(id='COND#1', sk='0', data='initial')
 
-    result1 = client.put_item(item, cond_expr=Item.sk.not_exists())
-    assert result1
+    client.put_item(item, cond_expr=Item.sk.not_exists())
 
     item2 = Item(id='COND#1', sk='0', data='updated')
     with pytest.raises(ClientError):

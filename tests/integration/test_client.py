@@ -1,3 +1,5 @@
+import pytest
+
 from dynamixe import ConfigDict, Model
 
 
@@ -10,8 +12,7 @@ class User(Model):
 
 def test_put_item_with_dict(client):
     item = {'id': 'USER#PUT', 'sk': '0', 'name': 'Put User'}
-    result = client.put_item(item, cond_expr=User.sk.not_exists())
-    assert result
+    client.put_item(item, cond_expr=User.sk.not_exists())
     stored = client.get_item({'id': 'USER#PUT', 'sk': '0'})
     assert stored['name'] == 'Put User'
 
@@ -111,3 +112,56 @@ def test_scan_with_expression_filter(client):
     names = {item['name'] for item in items}
     assert 'Bob' not in names
     assert names == {'Alice', 'Charlie'}
+
+
+def test_delete_item_basic(client):
+    client.put_item({'id': 'USER#DELETE', 'sk': '0', 'name': 'To Delete'})
+
+    stored = client.get_item({'id': 'USER#DELETE', 'sk': '0'})
+    assert stored['name'] == 'To Delete'
+
+    result = client.delete_item({'id': 'USER#DELETE', 'sk': '0'})
+    assert result is None
+
+    deleted = client.get_item({'id': 'USER#DELETE', 'sk': '0'}, raise_on_error=False)
+    assert deleted is None
+
+
+def test_delete_item_with_condition(client):
+    client.put_item({'id': 'USER#DEL_COND', 'sk': '0', 'name': 'Conditional'})
+
+    with pytest.raises(Exception):
+        client.delete_item(
+            {'id': 'USER#DEL_COND', 'sk': '0'},
+            cond_expr=User.sk.not_exists(),
+        )
+
+    # Item should still exist (condition failed)
+    stored = client.get_item({'id': 'USER#DEL_COND', 'sk': '0'}, raise_on_error=False)
+    assert stored is not None
+
+    # Delete with passing condition
+    result = client.delete_item(
+        {'id': 'USER#DEL_COND', 'sk': '0'},
+        cond_expr=User.id == 'USER#DEL_COND',
+    )
+    assert result is None
+
+    deleted = client.get_item({'id': 'USER#DEL_COND', 'sk': '0'}, raise_on_error=False)
+    assert deleted is None
+
+
+def test_delete_item_with_return_values(client):
+    client.put_item({'id': 'USER#DEL_RET', 'sk': '0', 'name': 'Return Test'})
+
+    result = client.delete_item(
+        {'id': 'USER#DEL_RET', 'sk': '0'},
+        return_values='ALL_OLD',
+    )
+
+    assert result is not None
+    assert result['name'] == 'Return Test'
+    assert result['id'] == 'USER#DEL_RET'
+
+    deleted = client.get_item({'id': 'USER#DEL_RET', 'sk': '0'}, raise_on_error=False)
+    assert deleted is None

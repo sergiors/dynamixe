@@ -7,6 +7,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypedDict
 
 import boto3
+from botocore.exceptions import ClientError
 
 from .expressions import Expression, extract_expression
 from .transact_get import TransactGet
@@ -339,9 +340,28 @@ class DynamoDBClient:
         """Create a transactional read operations client."""
         return TransactGet(self._table_name, self._client)
 
-    def transact_writer(self) -> TransactWriter:
-        """Create a transactional write operations client."""
-        return TransactWriter(self._table_name, self._client)
+    def transact_writer(
+        self,
+        flush_amount: int = 50,
+        fail_fast: bool = True,
+    ) -> TransactWriter:
+        """Create a transactional write operations context manager.
+
+        Args:
+            flush_amount: Number of operations to batch before flushing (default: 50).
+                DynamoDB transact_write_items limit is 100 operations per transaction.
+            fail_fast: If True, raise on first cancellation reason. If False,
+                continue processing and attach cancellation reasons to exceptions.
+
+        Returns:
+            TransactWriter context manager for batching transactional writes.
+
+        Example:
+            >>> with client.transact_writer() as tx:
+            ...     tx.put_item(User(id='USER#1', name='Alice'))
+            ...     tx.delete_item({'id': 'USER#2', 'sk': '0'})
+        """
+        return TransactWriter(self._table_name, self._client, flush_amount, fail_fast)
 
 
 def _startkey_b64decode(key: str) -> dict:

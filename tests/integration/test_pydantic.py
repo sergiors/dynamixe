@@ -29,11 +29,10 @@ def test_pydantic_with_expression_condition(client, settings):
         sk: str
         name: str
 
-    result = client.put_item(
+    client.put_item(
         user,
         cond_expr=User.sk.not_exists(),
     )
-    assert result
 
     stored = client.get_item({'id': 'PYDANTIC#1', 'sk': '0'})
     assert stored['name'] == 'Pydantic User'

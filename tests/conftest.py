@@ -25,24 +25,21 @@ def boto3_dynamodb_client(
         region_name='us-east-1',
     )
 
-    try:
-        client.create_table(
-            TableName=table_name,
-            AttributeDefinitions=[
-                {'AttributeName': pk, 'AttributeType': 'S'},
-                {'AttributeName': sk, 'AttributeType': 'S'},
-            ],
-            KeySchema=[
-                {'AttributeName': pk, 'KeyType': 'HASH'},
-                {'AttributeName': sk, 'KeyType': 'RANGE'},
-            ],
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 123,
-                'WriteCapacityUnits': 123,
-            },
-        )
-    except Exception:
-        pass
+    client.create_table(
+        TableName=table_name,
+        AttributeDefinitions=[
+            {'AttributeName': pk, 'AttributeType': 'S'},
+            {'AttributeName': sk, 'AttributeType': 'S'},
+        ],
+        KeySchema=[
+            {'AttributeName': pk, 'KeyType': 'HASH'},
+            {'AttributeName': sk, 'KeyType': 'RANGE'},
+        ],
+        ProvisionedThroughput={
+            'ReadCapacityUnits': 123,
+            'WriteCapacityUnits': 123,
+        },
+    )
 
     yield client
 
