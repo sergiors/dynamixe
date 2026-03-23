@@ -15,14 +15,10 @@ keywords = [
     "orm",
     "boto3",
     "database",
-    "single-table-design",
-    "pydantic",
     "type-safe",
-    "expression-api",
 ]
 dependencies = [
     "boto3>=1.26",
-    "pydantic>=2.0",
     "jmespath>=0.10.0",
 ]
 classifiers = [
@@ -40,6 +36,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
+
+[project.optional-dependencies]
+pydantic = ["pydantic>=2.0"]
 
 [dependency-groups]
 dev = [
