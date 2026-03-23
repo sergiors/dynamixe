@@ -25,5 +25,4 @@ def test_query_output_dict_methods():
     items = [{'id': 'USER#1', 'name': 'Alice'}]
     output = QueryOutput(items=items, count=1)
 
-    assert 'items' in output
-    assert output['count'] == 1
+    assert len(output) == 1

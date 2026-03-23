@@ -47,13 +47,8 @@ class QueryOutput:
         self.count = count
         self.last_key = last_key
 
-    def __getitem__(self, key: str) -> list | int | str:
-        if key not in {'items', 'count', 'last_key'}:
-            raise KeyError(key)
+    def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
-
-    def __contains__(self, key: str) -> bool:
-        return hasattr(self, key)
 
     def __len__(self) -> int:
         return len(self.items)
@@ -305,8 +300,9 @@ class DynamoDBClient:
             attrs['ProjectionExpression'] = projection_expr
 
         output = self._client.scan(**attrs)
+        items = output.get('Items', [])
 
-        return [deserialize(item) for item in output.get('Items', [])]
+        return [deserialize(item) for item in items]
 
     def query(
         self,
@@ -358,9 +354,10 @@ class DynamoDBClient:
             attrs['ProjectionExpression'] = projection_expr
 
         output = self._client.query(**attrs)
+        items = output.get('Items', [])
 
         return QueryOutput(
-            items=[deserialize(item) for item in output.get('Items', [])],
+            items=[deserialize(item) for item in items],
             count=output.get('Count', 0),
             last_key=_startkey_b64encode(output.get('LastEvaluatedKey')),
         )

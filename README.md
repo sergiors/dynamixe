@@ -62,6 +62,26 @@ client.put_item(
 )
 ```
 
+### Query Items
+
+```python
+# Query with key condition expression
+result = client.query(
+    User.id == 'USER#10',
+    scan_index_forward=True,
+    limit=10,
+)
+
+# Access results as dict
+items = result['items']
+count = result['count']
+last_key = result['last_key']  # For pagination
+
+# Transform with JMESPath
+names = result.jmespath('[*].name')
+# ['Alice', 'Bob', 'Charlie']
+```
+
 ### Transactional Writes
 
 ```python
@@ -88,14 +108,14 @@ with client.transact_writer() as tx:
 from dynamixe import TransactGet, get
 
 tx = TransactGet('users', client=boto3_client)
-results = tx.get_items(
+result = tx.get_items(
     get({'id': 'USER#1', 'sk': '0'}),
     get({'id': 'USER#2', 'sk': '0'}).project(User.name, User.email),
 )
 
 # Or via client
 tx = client.transact_get()
-results = tx.get_items(...)
+result = tx.get_items(...)
 ```
 
 ### JMESPath Transformations
@@ -117,9 +137,9 @@ names = tx.get_items(
 The `TransactGetResult` wrapper supports list-like operations:
 
 ```python
-results = tx.get_items(get({'id': 'USER#1', 'sk': '0'}))
-len(results)        # 1
-results[0]          # {'id': 'USER#1', ...}
+result = tx.get_items(get({'id': 'USER#1', 'sk': '0'}))
+len(result)        # 1
+result[0]          # {'id': 'USER#1', ...}
 for item in results:
     print(item['name'])
 ```

@@ -26,12 +26,8 @@ def test_query_with_dict_data(client):
         User.id == 'USER#QUERY', filter_expr=User.name.begins_with('A')
     )
 
-    assert 'items' in result
-    assert 'count' in result
-    assert 'last_key' in result
-
     items = result['items']
-    assert len(items) == 2
+    assert len(result) == 2
     assert {item['name'] for item in items} == {'Alice', 'Ada'}
 
 
