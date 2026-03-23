@@ -36,22 +36,17 @@ class ConfigDict(TypedDict, total=False):
     sort_key: str | None
 
 
-class QueryOutput:
+class QueryOutput(dict):
     def __init__(
         self,
         items: list[dict[str, Any]],
         count: int,
         last_key: str | None = None,
     ) -> None:
-        self.items = items
-        self.count = count
-        self.last_key = last_key
-
-    def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
-
-    def __len__(self) -> int:
-        return len(self.items)
+        super().__init__()
+        self['items'] = items
+        self['count'] = count
+        self['last_key'] = last_key
 
     def jmespath(self, expr: str) -> Any:
         """Apply JMESPath expression to result list.
@@ -63,7 +58,7 @@ class QueryOutput:
             Transformed result from JMESPath search.
             Returns raw JMESPath output (list, dict, scalar) without wrapping.
         """
-        return jmespath.search(expr, self.items)
+        return jmespath.search(expr, self['items'])
 
 
 def _get_dynamodb_config(obj: Any) -> ConfigDict | None:

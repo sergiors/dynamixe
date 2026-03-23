@@ -69,5 +69,5 @@ def test_pydantic_query_with_filter(client, settings):
     )
 
     items = result['items']
-    assert len(result) == 1
+    assert len(items) == 1
     assert items[0]['value'] == 'A'

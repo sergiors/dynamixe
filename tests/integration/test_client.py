@@ -27,7 +27,7 @@ def test_query_with_dict_data(client):
     )
 
     items = result['items']
-    assert len(result) == 2
+    assert len(items) == 2
     assert {item['name'] for item in items} == {'Alice', 'Ada'}
 
 
