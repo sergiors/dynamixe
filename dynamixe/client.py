@@ -109,7 +109,7 @@ class DynamoDBClient:
         table_name: str | None = None,
         return_values: ReturnValueType | None = None,
         return_on_cond_fail: ReturnValuesOnConditionCheckFailureType | None = None,
-    ) -> Any:
+    ) -> dict | None:
         """Put an item with optional condition expression."""
 
         config = _get_dynamodb_config(item.__class__)
@@ -141,7 +141,12 @@ class DynamoDBClient:
         if return_on_cond_fail:
             attrs['ReturnValuesOnConditionCheckFailure'] = return_on_cond_fail
 
-        return self._client.put_item(**attrs)
+        output = self._client.put_item(**attrs)
+
+        if return_values:
+            return deserialize(output.get('Attributes', {}))
+
+        return None
 
     def update_item(
         self,
@@ -198,7 +203,7 @@ class DynamoDBClient:
         table_name: str | None = None,
         return_values: ReturnValueType | None = None,
         return_on_cond_fail: ReturnValuesOnConditionCheckFailureType | None = None,
-    ) -> None:
+    ) -> dict | None:
         """Delete an item with optional condition expression."""
         attrs: dict[str, Any] = {
             'TableName': table_name or self._table_name,
@@ -224,7 +229,12 @@ class DynamoDBClient:
         if return_on_cond_fail:
             attrs['ReturnValuesOnConditionCheckFailure'] = return_on_cond_fail
 
-        self._client.delete_item(**attrs)
+        output = self._client.delete_item(**attrs)
+
+        if return_values:
+            return deserialize(output.get('Attributes', {}))
+
+        return None
 
     def scan(
         self,
@@ -234,7 +244,7 @@ class DynamoDBClient:
         expr_attr_values: dict | None = None,
         projection_expr: str | None = None,
         limit: int | None = None,
-        exclusive_start_key: str | dict | None = None,
+        exclusive_start_key: str | None = None,
         table_name: str | None = None,
     ) -> list[dict]:
         """Scan items with optional filter expression."""
@@ -256,10 +266,7 @@ class DynamoDBClient:
             attrs['ExpressionAttributeValues'] = serialize(values)
 
         if exclusive_start_key:
-            if isinstance(exclusive_start_key, str):
-                attrs['ExclusiveStartKey'] = _startkey_b64decode(exclusive_start_key)
-            else:
-                attrs['ExclusiveStartKey'] = exclusive_start_key
+            attrs['ExclusiveStartKey'] = _startkey_b64decode(exclusive_start_key)
 
         if filter_cond:
             attrs['FilterExpression'] = filter_cond
@@ -282,7 +289,7 @@ class DynamoDBClient:
         projection_expr: str | None = None,
         limit: int | None = None,
         scan_index_forward: bool = True,
-        exclusive_start_key: str | dict | None = None,
+        exclusive_start_key: str | None = None,
         table_name: str | None = None,
     ) -> QueryOutput:
         """Query items with key condition expression."""
@@ -312,10 +319,7 @@ class DynamoDBClient:
             attrs['ExpressionAttributeValues'] = serialize(filter_values)
 
         if exclusive_start_key:
-            if isinstance(exclusive_start_key, str):
-                attrs['ExclusiveStartKey'] = _startkey_b64decode(exclusive_start_key)
-            else:
-                attrs['ExclusiveStartKey'] = exclusive_start_key
+            attrs['ExclusiveStartKey'] = _startkey_b64decode(exclusive_start_key)
 
         if filter_cond:
             attrs['FilterExpression'] = filter_cond
