@@ -20,7 +20,10 @@ class Operator(Enum):
 
 class Expression:
     def __init__(
-        self, expr: str, names: dict | None = None, values: dict | None = None
+        self,
+        expr: str,
+        names: dict | None = None,
+        values: dict | None = None,
     ):
         self.expr = expr
         self.names = names or {}
@@ -41,7 +44,12 @@ class AttrExpression(Expression):
         self.attr_name = attr_name
         self.model_cls = model_cls
 
-        super().__init__(f'#{attr_name}', {f'#{attr_name}': attr_name})
+        super().__init__(
+            expr=f'#{attr_name}',
+            names={
+                f'#{attr_name}': attr_name,
+            },
+        )
 
     def __eq__(self, other: Any) -> Expression:  # type: ignore[override]
         return ComparisonExpression(self, Operator.EQ, other)
@@ -62,19 +70,33 @@ class AttrExpression(Expression):
         return ComparisonExpression(self, Operator.GE, other)
 
     def not_exists(self) -> Expression:
-        return Expression(f'attribute_not_exists({self.expr})', self.names, None)
+        return Expression(
+            expr=f'attribute_not_exists({self.expr})',
+            names=self.names,
+            values=None,
+        )
 
     def exists(self) -> Expression:
-        return Expression(f'attribute_exists({self.expr})', self.names, None)
+        return Expression(
+            expr=f'attribute_exists({self.expr})',
+            names=self.names,
+            values=None,
+        )
 
     def begins_with(self, value: str) -> Expression:
         vk = f':{self.attr_name}_begins'
-        return Expression(f'begins_with({self.expr}, {vk})', self.names, {vk: value})
+        return Expression(
+            expr=f'begins_with({self.expr}, {vk})',
+            names=self.names,
+            values={vk: value},
+        )
 
     def between(self, low: Any, high: Any) -> Expression:
         lk, hk = f':{self.attr_name}_low', f':{self.attr_name}_high'
         return Expression(
-            f'{self.expr} BETWEEN {lk} AND {hk}', self.names, {lk: low, hk: high}
+            expr=f'{self.expr} BETWEEN {lk} AND {hk}',
+            names=self.names,
+            values={lk: low, hk: high},
         )
 
 
@@ -108,7 +130,11 @@ class AttrDescriptor(Generic[T]):
     def __init__(self, name: str):
         self.name = name
 
-    def __get__(self, obj: Any, objtype: type | None = None) -> AttrExpression:
+    def __get__(
+        self,
+        obj: Any,
+        objtype: type | None = None,
+    ) -> AttrExpression:
         return AttrExpression(self.name, objtype)
 
     def __set__(self, obj: Any, value: T) -> None:

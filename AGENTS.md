@@ -11,7 +11,6 @@ Dynamixe is a SQLAlchemy-style DynamoDB ORM with an expression-based API. It pro
 -   **`expressions.py`** - Expression algebra (`Expression`, `AttrExpression`, operators)
 -   **`models.py`** - `Model` base class with descriptor-based attribute access
 -   **`client.py`** - `DynamoDBClient` with ConfigDict pattern
--   **`keys.py`** - `PrimaryKey`, `SortKey`, `PartitionKey` for key operations
 -   **`types.py`** - Serialization/deserialization utilities
 -   **`transact_get.py`** - Transactional read operations
 -   **`transact_writer.py`** - Transactional write operations
@@ -251,7 +250,6 @@ class User:
 ## Running Tests
 
 ```bash
-cd /Users/sergio/Projects/dynamixe
 uv run pytest tests/ -v
 uv run pytest tests/test_expressions.py -v  # Specific file
 uv run pytest tests/ -k "test_equality"     # Specific test

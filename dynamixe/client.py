@@ -15,8 +15,16 @@ from .types import deserialize, serialize, to_dict
 
 if TYPE_CHECKING:
     from mypy_boto3_dynamodb.client import DynamoDBClient as Boto3DynamoDBClient
+    from mypy_boto3_dynamodb.literals import (
+        ReturnValuesOnConditionCheckFailureType,
+        ReturnValueType,
+        SelectType,
+    )
 else:
     Boto3DynamoDBClient = Any
+    ReturnValuesOnConditionCheckFailureType = Any
+    ReturnValueType = Any
+    SelectType = Any
 
 
 class ConfigDict(TypedDict, total=False):
@@ -99,8 +107,8 @@ class DynamoDBClient:
         expr_attr_names: dict | None = None,
         expr_attr_values: dict | None = None,
         table_name: str | None = None,
-        return_values: Any | None = None,
-        return_on_cond_fail: Any | None = None,
+        return_values: ReturnValueType | None = None,
+        return_on_cond_fail: ReturnValuesOnConditionCheckFailureType | None = None,
     ) -> Any:
         """Put an item with optional condition expression."""
 
@@ -144,8 +152,8 @@ class DynamoDBClient:
         expr_attr_names: dict | None = None,
         expr_attr_values: dict | None = None,
         table_name: str | None = None,
-        return_values: Any | None = None,
-        return_on_cond_fail: Any | None = None,
+        return_values: ReturnValueType | None = None,
+        return_on_cond_fail: ReturnValuesOnConditionCheckFailureType | None = None,
     ) -> dict | None:
         """Update an item with update expression."""
         attrs: dict[str, Any] = {
@@ -188,8 +196,8 @@ class DynamoDBClient:
         expr_attr_names: dict | None = None,
         expr_attr_values: dict | None = None,
         table_name: str | None = None,
-        return_values: Any | None = None,
-        return_on_cond_fail: Any | None = None,
+        return_values: ReturnValueType | None = None,
+        return_on_cond_fail: ReturnValuesOnConditionCheckFailureType | None = None,
     ) -> None:
         """Delete an item with optional condition expression."""
         attrs: dict[str, Any] = {
@@ -267,7 +275,7 @@ class DynamoDBClient:
         self,
         key_expr: str | Expression,
         *,
-        select: str | None = None,
+        select: SelectType | None = None,
         filter_expr: str | Expression | None = None,
         expr_attr_names: dict | None = None,
         expr_attr_values: dict | None = None,

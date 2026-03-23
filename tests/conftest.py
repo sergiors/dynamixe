@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Generator
 
 import boto3
 import pytest
-from moto import mock_aws
 
 if TYPE_CHECKING:
     from mypy_boto3_dynamodb.client import DynamoDBClient as Boto3DynamoDBClient
@@ -16,12 +15,17 @@ else:
 def boto3_dynamodb_client(
     settings,
 ) -> Generator[Boto3DynamoDBClient, None, None]:
-    with mock_aws():
-        table_name = settings['table_name']
-        pk = settings['partition_key']
-        sk = settings['sort_key']
+    table_name = settings['table_name']
+    pk = settings['partition_key']
+    sk = settings['sort_key']
 
-        client = boto3.client('dynamodb', region_name='us-east-1')
+    client = boto3.client(
+        'dynamodb',
+        endpoint_url='http://localhost:8000',
+        region_name='us-east-1',
+    )
+
+    try:
         client.create_table(
             TableName=table_name,
             AttributeDefinitions=[
@@ -37,8 +41,12 @@ def boto3_dynamodb_client(
                 'WriteCapacityUnits': 123,
             },
         )
+    except Exception:
+        pass
 
-        yield client
+    yield client
+
+    client.delete_table(TableName=table_name)
 
 
 @pytest.fixture
