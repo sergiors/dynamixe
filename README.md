@@ -77,6 +77,19 @@ with TransactWriter('users', client=boto3_client) as tx:
     )
 ```
 
+### Transactional Reads
+
+```python
+from dynamixe import TransactGet, get
+
+with TransactGet('users', client=boto3_client) as tx:
+    results = tx.get_items(
+        get({'id': 'USER#1', 'sk': '0'}),
+        get({'id': 'USER#2', 'sk': '0'}).project(User.name, User.email),
+    )
+```
+
+
 ### Works with Any Model Pattern
 
 **Pydantic:**
