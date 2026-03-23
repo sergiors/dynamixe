@@ -14,6 +14,8 @@ else:
     TransactGetItemTypeDef = Any
     GetTypeDef = Any
 
+__all__ = ['GetItem', 'get', 'TransactGet']
+
 
 @dataclass
 class GetItem:
@@ -27,7 +29,16 @@ class GetItem:
         *attrs: AttrExpression | str,
         expr_attr_names: dict[str, str] | None = None,
     ) -> GetItem:
-        """Build projection expression from attributes."""
+        """Build projection expression from attributes.
+
+        Args:
+            *attrs: Attributes to project (strings or expressions).
+            expr_attr_names: Optional expression attribute names mapping.
+
+        Returns:
+            New GetItem with projection_expr and expr_attr_names set.
+            Returns self unchanged if no attrs provided (expr_attr_names ignored).
+        """
         if not attrs:
             return self
 
@@ -55,6 +66,11 @@ def get(key: dict[str, str] | Expression) -> GetItem:
     if not isinstance(key, Expression):
         return GetItem(key=key)
 
+    if not key.names or not key.values:
+        raise ValueError(
+            'Expression must contain attribute names and values to build key'
+        )
+
     attr_names = list(key.names.values())
     attr_values = list(key.values.values())
     return GetItem(key=dict(zip(attr_names, attr_values)))
@@ -75,9 +91,19 @@ class TransactGet:
         self,
         *items: GetItem,
     ) -> list[dict]:
+        """Execute transactional get operations.
+
+        Args:
+            *items: GetItem configurations with keys and optional projections.
+
+        Returns:
+            List of deserialized items from DynamoDB responses.
+            Returns empty list if no items are found.
+        """
         transact_items = [_build_get_item(item, self._table_name) for item in items]
         output = self._client.transact_get_items(TransactItems=transact_items)
 
+        # Returns empty list when no items match keys (DynamoDB behavior)
         return [
             deserialize(response['Item'])
             for response in output.get('Responses', [])
