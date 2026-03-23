@@ -26,7 +26,6 @@ def test_query_with_dict_data(client):
         User.id == 'USER#QUERY', filter_expr=User.name.begins_with('A')
     )
 
-    assert isinstance(result, dict)
     assert 'items' in result
     assert 'count' in result
     assert 'last_key' in result

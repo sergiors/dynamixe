@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, TypedDict
 
 import boto3
-from botocore.exceptions import ClientError
+import jmespath
 
 from .expressions import Expression, extract_expression
 from .transact_get import TransactGet
@@ -36,10 +36,39 @@ class ConfigDict(TypedDict, total=False):
     sort_key: str | None
 
 
-class QueryOutput(TypedDict):
-    items: list[dict[str, Any]]
-    count: int
-    last_key: str | None
+class QueryOutput:
+    def __init__(
+        self,
+        items: list[dict[str, Any]],
+        count: int,
+        last_key: str | None = None,
+    ) -> None:
+        self.items = items
+        self.count = count
+        self.last_key = last_key
+
+    def __getitem__(self, key: str) -> list | int | str:
+        if key not in {'items', 'count', 'last_key'}:
+            raise KeyError(key)
+        return getattr(self, key)
+
+    def __contains__(self, key: str) -> bool:
+        return hasattr(self, key)
+
+    def __len__(self) -> int:
+        return len(self.items)
+
+    def jmespath(self, expr: str) -> Any:
+        """Apply JMESPath expression to result list.
+
+        Args:
+            expr: JMESPath expression (e.g., '[*].name', '[0]', '[?active == `true`]').
+
+        Returns:
+            Transformed result from JMESPath search.
+            Returns raw JMESPath output (list, dict, scalar) without wrapping.
+        """
+        return jmespath.search(expr, self.items)
 
 
 def _get_dynamodb_config(obj: Any) -> ConfigDict | None:
@@ -330,11 +359,11 @@ class DynamoDBClient:
 
         output = self._client.query(**attrs)
 
-        return {
-            'items': [deserialize(item) for item in output.get('Items', [])],
-            'count': output.get('Count', 0),
-            'last_key': _startkey_b64encode(output.get('LastEvaluatedKey')),
-        }
+        return QueryOutput(
+            items=[deserialize(item) for item in output.get('Items', [])],
+            count=output.get('Count', 0),
+            last_key=_startkey_b64encode(output.get('LastEvaluatedKey')),
+        )
 
     def transact_get(self) -> TransactGet:
         """Create a transactional read operations client."""

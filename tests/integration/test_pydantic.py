@@ -68,7 +68,6 @@ def test_pydantic_query_with_filter(client, settings):
         filter_expr=ExprItem.value.begins_with('A'),
     )
 
-    assert isinstance(result, dict)
     assert 'items' in result
     assert 'count' in result
 
