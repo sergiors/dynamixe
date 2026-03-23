@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any
 
+import jmespath
+
 from .expressions import AttrExpression, Expression
 from .types import deserialize, serialize
 
@@ -14,7 +16,7 @@ else:
     TransactGetItemTypeDef = Any
     GetTypeDef = Any
 
-__all__ = ['GetItem', 'get', 'TransactGet']
+__all__ = ['GetItem', 'get', 'TransactGet', 'TransactGetResult']
 
 
 @dataclass
@@ -76,6 +78,28 @@ def get(key: dict[str, str] | Expression) -> GetItem:
     return GetItem(key=dict(zip(attr_names, attr_values)))
 
 
+class TransactGetResult(list[dict]):
+    """Wrapper for transact_get results with JMESPath support."""
+
+    def __init__(self, items: list[dict]) -> None:
+        super().__init__(items)
+
+    def jmespath(self, expr: str) -> Any:
+        """Apply JMESPath expression to result list.
+
+        Args:
+            expr: JMESPath expression (e.g., '[*].name', '[0]', '[?active == `true`]').
+
+        Returns:
+            Transformed result from JMESPath search.
+            Returns raw JMESPath output (list, dict, scalar) without wrapping.
+        """
+        return jmespath.search(expr, self)
+
+    def __repr__(self) -> str:
+        return f'TransactGetResult({list(self)!r})'
+
+
 class TransactGet:
     """Transactional read operations."""
 
@@ -90,25 +114,26 @@ class TransactGet:
     def get_items(
         self,
         *items: GetItem,
-    ) -> list[dict]:
+    ) -> TransactGetResult:
         """Execute transactional get operations.
 
         Args:
             *items: GetItem configurations with keys and optional projections.
 
         Returns:
-            List of deserialized items from DynamoDB responses.
-            Returns empty list if no items are found.
+            TransactGetResult wrapper containing list of deserialized items.
+            Use .jmespath() to transform results with JMESPath expressions.
         """
         transact_items = [_build_get_item(item, self._table_name) for item in items]
         output = self._client.transact_get_items(TransactItems=transact_items)
 
-        # Returns empty list when no items match keys (DynamoDB behavior)
-        return [
-            deserialize(response['Item'])
-            for response in output.get('Responses', [])
-            if 'Item' in response
-        ]
+        return TransactGetResult(
+            [
+                deserialize(response['Item'])
+                for response in output.get('Responses', [])
+                if 'Item' in response
+            ]
+        )
 
 
 def _build_get_item(item: GetItem, table_name: str) -> TransactGetItemTypeDef:

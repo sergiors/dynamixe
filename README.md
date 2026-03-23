@@ -9,6 +9,7 @@ A developer-friendly library for DynamoDB that simplifies single-table design wi
 -   **No ORM lock-in** - Works with Pydantic, dataclasses, or plain dicts
 -   **Transactional operations** - Full support for transact_get and transact_write
 -   **Conditional operations** - Expression-based conditions with custom exceptions
+-   **JMESPath transformations** - Transform transactional results with powerful queries
 
 ## Installation
 
@@ -75,6 +76,10 @@ with TransactWriter('users', client=boto3_client) as tx:
         cond_expr=User.sk.not_exists(),
         exc_cls=EmailConflictError,
     )
+
+# Or via client
+with client.transact_writer() as tx:
+    ...
 ```
 
 ### Transactional Reads
@@ -82,13 +87,42 @@ with TransactWriter('users', client=boto3_client) as tx:
 ```python
 from dynamixe import TransactGet, get
 
-with TransactGet('users', client=boto3_client) as tx:
-    results = tx.get_items(
-        get({'id': 'USER#1', 'sk': '0'}),
-        get({'id': 'USER#2', 'sk': '0'}).project(User.name, User.email),
-    )
+tx = TransactGet('users', client=boto3_client)
+results = tx.get_items(
+    get({'id': 'USER#1', 'sk': '0'}),
+    get({'id': 'USER#2', 'sk': '0'}).project(User.name, User.email),
+)
+
+# Or via client
+tx = client.transact_get()
+results = tx.get_items(...)
 ```
 
+### JMESPath Transformations
+
+Transform transactional results with JMESPath expressions:
+
+```python
+from dynamixe import TransactGet, get
+
+tx = client.transact_get()
+
+names = tx.get_items(
+    get({'id': 'USER#1', 'sk': '0'}),
+    get({'id': 'USER#2', 'sk': '0'}),
+).jmespath('[*].name')
+# ['Alice', 'Bob']
+```
+
+The `TransactGetResult` wrapper supports list-like operations:
+
+```python
+results = tx.get_items(get({'id': 'USER#1', 'sk': '0'}))
+len(results)        # 1
+results[0]          # {'id': 'USER#1', ...}
+for item in results:
+    print(item['name'])
+```
 
 ### Works with Any Model Pattern
 
@@ -163,6 +197,13 @@ ConfigDict(
 -   **Conditions**: `not_exists()`, `exists()`, `begins_with()`, `between()`
 -   **Logical**: `&` (AND), `|` (OR), `~` (NOT)
 
+### TransactGetResult
+
+-   `jmespath(expr)` - Apply JMESPath expression to transform results
+-   `__len__()` - Support for `len()`
+-   `__getitem__(index)` - Support for indexing
+-   `__iter__()` - Support for iteration
+
 ## Why Dynamixe?
 
 -   **No ORM lock-in** - Use Pydantic, dataclasses, or plain dicts
@@ -170,6 +211,7 @@ ConfigDict(
 -   **Single-table design** - Built for DynamoDB best practices
 -   **Expression API** - Composable, testable, readable
 -   **Transactional** - ACID operations with custom exceptions
+-   **JMESPath support** - Powerful result transformations
 
 ## License
 
