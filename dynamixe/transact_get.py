@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING, Any, Self
-
-import jmespath
+from typing import TYPE_CHECKING, Self
 
 from dynamixe._jmespath import JMESPathMixin
 
@@ -13,10 +11,6 @@ from .types import deserialize, serialize
 if TYPE_CHECKING:
     from mypy_boto3_dynamodb.client import DynamoDBClient as Boto3DynamoDBClient
     from mypy_boto3_dynamodb.type_defs import GetTypeDef, TransactGetItemTypeDef
-else:
-    Boto3DynamoDBClient = Any
-    TransactGetItemTypeDef = Any
-    GetTypeDef = Any
 
 __all__ = ['GetItem', 'get', 'TransactGet', 'TransactGetResult']
 

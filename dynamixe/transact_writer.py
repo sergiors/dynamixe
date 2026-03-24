@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Any, Self, TypedDict
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Self, TypedDict
 
 import jmespath
 
@@ -9,10 +11,6 @@ if TYPE_CHECKING:
     from mypy_boto3_dynamodb.client import DynamoDBClient as Boto3DynamoDBClient
     from mypy_boto3_dynamodb.literals import ReturnValuesOnConditionCheckFailureType
     from mypy_boto3_dynamodb.type_defs import TransactWriteItemTypeDef
-else:
-    Boto3DynamoDBClient = Any
-    ReturnValuesOnConditionCheckFailureType = Any
-    TransactWriteItemTypeDef = Any
 
 
 class TransactionCanceledReason(TypedDict):

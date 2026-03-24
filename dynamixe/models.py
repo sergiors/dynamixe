@@ -9,7 +9,11 @@ if TYPE_CHECKING:
     from .expressions import AttrExpression
 
 
-class Model:
+class _ModelMeta(type):
+    def __getattr__(cls, name: str) -> AttrExpression: ...
+
+
+class Model(metaclass=_ModelMeta):
     """Base model class that provides SQLAlchemy-style expression access.
 
     Usage:
@@ -41,10 +45,6 @@ class Model:
             for name in cls.__annotations__.keys():
                 if not name.startswith('_'):
                     setattr(cls, name, AttrDescriptor(name))
-
-    if TYPE_CHECKING:
-
-        def __getattr__(self, name: str) -> AttrExpression: ...
 
     @classmethod
     def get_table(cls) -> str:

@@ -22,11 +22,6 @@ if TYPE_CHECKING:
         ReturnValueType,
         SelectType,
     )
-else:
-    Boto3DynamoDBClient = Any
-    ReturnValuesOnConditionCheckFailureType = Any
-    ReturnValueType = Any
-    SelectType = Any
 
 T = TypeVar('T')
 
