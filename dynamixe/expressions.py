@@ -93,6 +93,7 @@ class AttrExpression(Expression):
 
     def between(self, low: Any, high: Any) -> Expression:
         lk, hk = f':{self.attr_name}_low', f':{self.attr_name}_high'
+
         return Expression(
             expr=f'{self.expr} BETWEEN {lk} AND {hk}',
             names=self.names,
@@ -139,10 +140,6 @@ class AttrDescriptor(Generic[T]):
 
     def __set__(self, obj: Any, value: T) -> None:
         pass
-
-
-def expr_field(name: str) -> AttrDescriptor:
-    return AttrDescriptor(name)
 
 
 def extract_expression(

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 import jmespath
+
+from dynamixe._jmespath import JMESPathMixin
 
 from .expressions import AttrExpression, Expression
 from .types import deserialize, serialize
@@ -78,23 +80,15 @@ def get(key: dict[str, str] | Expression) -> GetItem:
     return GetItem(key=dict(zip(attr_names, attr_values)))
 
 
-class TransactGetResult(list[dict]):
+class TransactGetResult(list[dict], JMESPathMixin):
     """Wrapper for transact_get results with JMESPath support."""
 
     def __init__(self, items: list[dict]) -> None:
         super().__init__(items)
 
-    def jmespath(self, expr: str) -> Any:
-        """Apply JMESPath expression to result list.
-
-        Args:
-            expr: JMESPath expression (e.g., '[*].name', '[0]', '[?active == `true`]').
-
-        Returns:
-            Transformed result from JMESPath search.
-            Returns raw JMESPath output (list, dict, scalar) without wrapping.
-        """
-        return jmespath.search(expr, self)
+    @property
+    def jmespath_target(self) -> Self:
+        return self
 
     def __repr__(self) -> str:
         return f'TransactGetResult({list(self)!r})'

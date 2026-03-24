@@ -1,8 +1,6 @@
-"""Dynamixe - SQLAlchemy-style DynamoDB ORM."""
-
 from .client import ConfigDict, DynamoDBClient
 from .expressions import AttrExpression, Expression
-from .models import Model, create_model
+from .models import Model
 from .transact_get import TransactGet
 from .transact_writer import (
     TransactionCanceledException,
@@ -16,7 +14,6 @@ __all__ = [
     'Expression',
     'AttrExpression',
     'Model',
-    'create_model',
     'TransactionOperationFailed',
     'TransactionCanceledException',
     'TransactWriter',

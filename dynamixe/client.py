@@ -4,10 +4,11 @@ import base64
 import json
 import urllib.parse as parse
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypedDict, TypeVar
+from typing import TYPE_CHECKING, Any, Self, TypedDict, TypeVar
 
 import boto3
-import jmespath
+
+from dynamixe._jmespath import JMESPathMixin
 
 from .expressions import Expression, extract_expression
 from .transact_get import TransactGet
@@ -38,43 +39,24 @@ class ConfigDict(TypedDict, total=False):
     sort_key: str | None
 
 
-class ItemOutput(dict):
-    def jmespath(self, expr: str) -> Any:
-        """Apply JMESPath expression to result list.
-
-        Args:
-            expr: JMESPath expression (e.g., '[*].name', '[0]', '[?active == `true`]').
-
-        Returns:
-            Transformed result from JMESPath search.
-            Returns raw JMESPath output (list, dict, scalar) without wrapping.
-        """
-        return jmespath.search(expr, self)
+class ItemOutput(dict, JMESPathMixin):
+    @property
+    def jmespath_target(self) -> Self:
+        return self
 
 
-class QueryOutput(dict):
+class QueryOutput(dict, JMESPathMixin):
     def __init__(
         self,
         items: list[dict[str, Any]],
         count: int,
         last_key: str | None = None,
     ) -> None:
-        super().__init__()
-        self['items'] = items
-        self['count'] = count
-        self['last_key'] = last_key
+        super().__init__(items=items, count=count, last_key=last_key)
 
-    def jmespath(self, expr: str) -> Any:
-        """Apply JMESPath expression to result list.
-
-        Args:
-            expr: JMESPath expression (e.g., '[*].name', '[0]', '[?active == `true`]').
-
-        Returns:
-            Transformed result from JMESPath search.
-            Returns raw JMESPath output (list, dict, scalar) without wrapping.
-        """
-        return jmespath.search(expr, self['items'])
+    @property
+    def jmespath_target(self) -> list[dict[str, Any]]:
+        return self['items']
 
 
 def _get_dynamodb_config(obj: Any) -> ConfigDict | None:

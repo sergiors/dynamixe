@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from .client import ConfigDict, _get_dynamodb_config
-from .expressions import expr_field
+from .expressions import AttrDescriptor
 
 if TYPE_CHECKING:
     from .expressions import AttrExpression
@@ -26,7 +26,7 @@ class Model:
 
     model_config: ClassVar[ConfigDict | None] = None
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
 
         # Get config from model_config or __dynamodb_config__
@@ -40,7 +40,7 @@ class Model:
         if hasattr(cls, '__annotations__'):
             for name in cls.__annotations__.keys():
                 if not name.startswith('_'):
-                    setattr(cls, name, expr_field(name))
+                    setattr(cls, name, AttrDescriptor(name))
 
     if TYPE_CHECKING:
 
@@ -60,15 +60,3 @@ class Model:
     def get_sort_key(cls) -> str | None:
         """Get the sort key attribute name."""
         return cls.model_config.get('sort_key') if cls.model_config else None
-
-
-def create_model(
-    name: str,
-    fields: dict[str, type],
-    config: ConfigDict,
-    base: type = Model,
-) -> type:
-    """Programmatically create a model class."""
-    annotations = dict(fields)
-    cls = type(name, (base,), {'__annotations__': annotations, 'model_config': config})
-    return cls
