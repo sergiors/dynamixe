@@ -1,20 +1,20 @@
 import pytest
 
-from dynamixe import ConfigDict, Model
-from dynamixe.client import DynamoDBClient
+from dynamixe import Attr, ConfigDict, DynamoDBClient, Model
 
 
 class User(Model):
     model_config = ConfigDict(table='pytest', partition_key='id', sort_key='sk')
-    id: str
-    sk: str
-    name: str
+    id: Attr
+    sk: Attr
+    name: Attr
 
 
 def test_put_item_with_dict(client: DynamoDBClient):
     item = {'id': 'USER#PUT', 'sk': '0', 'name': 'Put User'}
     client.put_item(item, cond_expr=User.sk.not_exists())
     stored = client.get_item({'id': 'USER#PUT', 'sk': '0'})
+    assert stored
     assert stored['name'] == 'Put User'
 
 
@@ -113,8 +113,8 @@ def test_scan_with_expression_filter(client: DynamoDBClient):
 def test_delete_item_basic(client: DynamoDBClient):
     client.put_item({'id': 'USER#DELETE', 'sk': '0', 'name': 'To Delete'})
 
-    stored = client.get_item({'id': 'USER#DELETE', 'sk': '0'}).jmespath('name')
-    assert stored == 'To Delete'
+    stored = client.get_item({'id': 'USER#DELETE', 'sk': '0'})
+    assert stored.jmespath('name') == 'To Delete'
 
     result = client.delete_item({'id': 'USER#DELETE', 'sk': '0'})
     assert result is None

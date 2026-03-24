@@ -1,13 +1,18 @@
 from dynamixe import ConfigDict, Model
 from dynamixe.client import DynamoDBClient
+from dynamixe.expressions import Attr
 from dynamixe.transact_get import TransactGet, TransactGetResult, get
 
 
 class User(Model):
-    model_config = ConfigDict(table='pytest', partition_key='id', sort_key='sk')
-    id: str
-    sk: str
-    name: str
+    model_config = ConfigDict(
+        table='pytest',
+        partition_key='id',
+        sort_key='sk',
+    )
+    id: Attr
+    sk: Attr
+    name: Attr
 
 
 def test_get_items_with_plain_dict(transact_get: TransactGet):
@@ -22,7 +27,6 @@ def test_get_items_with_model_expression(
     client: DynamoDBClient,
     transact_get: TransactGet,
 ):
-    
     client.put_item({'id': 'USER#MODEL', 'sk': '0', 'name': 'Model User'})
 
     result = transact_get.get_items(
@@ -37,7 +41,6 @@ def test_get_items_with_projection(
     client: DynamoDBClient,
     transact_get: TransactGet,
 ):
-    
     client.put_item(
         {
             'id': 'USER#PROJ',
@@ -69,7 +72,7 @@ def test_get_items_multiple_keys(
     client: DynamoDBClient,
     transact_get: TransactGet,
 ):
-    
+
     client.put_item({'id': 'USER#1', 'sk': '0', 'name': 'Alice'})
     client.put_item({'id': 'USER#2', 'sk': '0', 'name': 'Bob'})
 
@@ -86,7 +89,6 @@ def test_get_items_result_is_iterable(
     client: DynamoDBClient,
     transact_get: TransactGet,
 ):
-    
     client.put_item({'id': 'USER#ITER', 'sk': '0', 'name': 'Iter User'})
 
     result = transact_get.get_items(get({'id': 'USER#ITER', 'sk': '0'}))
@@ -98,7 +100,6 @@ def test_get_items_result_supports_indexing(
     client: DynamoDBClient,
     transact_get: TransactGet,
 ):
-    
     client.put_item({'id': 'USER#IDX', 'sk': '0', 'name': 'Indexed'})
 
     result = transact_get.get_items(get({'id': 'USER#IDX', 'sk': '0'}))
@@ -110,7 +111,6 @@ def test_get_items_with_jmespath(
     client: DynamoDBClient,
     transact_get: TransactGet,
 ):
-    
     client.put_item({'id': 'USER#JP', 'sk': '0', 'name': 'JMESPath User'})
 
     result = transact_get.get_items(

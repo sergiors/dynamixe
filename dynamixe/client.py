@@ -4,7 +4,7 @@ import base64
 import json
 import urllib.parse as parse
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Self, TypeVar
+from typing import TYPE_CHECKING, Any, Self, TypeVar, overload
 
 import boto3
 
@@ -58,6 +58,32 @@ class DynamoDBClient:
     ) -> None:
         self._table_name = table_name
         self._client = client or boto3.client('dynamodb', **client_kwargs)
+
+    @overload
+    def get_item(
+        self,
+        key: dict,
+        *,
+        table_name: str | None = None,
+        expr_attr_names: dict | None = None,
+        projection_expr: str | None = None,
+        raise_on_error: bool = True,
+        exc_cls: type[Exception] = Exception,
+        default: None = None,
+    ) -> ItemOutput: ...
+
+    @overload
+    def get_item(
+        self,
+        key: dict,
+        *,
+        table_name: str | None = None,
+        expr_attr_names: dict | None = None,
+        projection_expr: str | None = None,
+        raise_on_error: bool = False,
+        exc_cls: type[Exception] = Exception,
+        default: T = None,
+    ) -> ItemOutput | T: ...
 
     def get_item(
         self,

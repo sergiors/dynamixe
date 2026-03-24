@@ -1,13 +1,13 @@
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from dynamixe import ConfigDict, Model
+from dynamixe import Attr, Model
 
 
 def test_pydantic_with_expression_condition(client, settings):
     class PydanticUser(BaseModel):
-        model_config: Any = ConfigDict(
+        model_config = ConfigDict(  # type: ignore
             table=settings['table_name'],
             partition_key='id',
             sort_key='sk',
@@ -19,14 +19,14 @@ def test_pydantic_with_expression_condition(client, settings):
     user = PydanticUser(id='PYDANTIC#1', sk='0', name='Pydantic User')
 
     class User(Model):
-        model_config = ConfigDict(
+        model_config = ConfigDict(  # type: ignore
             table=settings['table_name'],
             partition_key='id',
             sort_key='sk',
         )
-        id: str
-        sk: str
-        name: str
+        id: Attr
+        sk: Attr
+        name: Attr
 
     client.put_item(
         user,
@@ -39,7 +39,7 @@ def test_pydantic_with_expression_condition(client, settings):
 
 def test_pydantic_query_with_filter(client, settings):
     class PydanticItem(BaseModel):
-        model_config: Any = ConfigDict(
+        model_config: Any = ConfigDict(  # type: ignore
             table=settings['table_name'],
             partition_key='id',
             sort_key='sk',
@@ -49,14 +49,14 @@ def test_pydantic_query_with_filter(client, settings):
         value: str
 
     class ExprItem(Model):
-        model_config = ConfigDict(
+        model_config = ConfigDict(  # type: ignore
             table=settings['table_name'],
             partition_key='id',
             sort_key='sk',
         )
-        id: str
-        sk: str
-        value: str
+        id: Attr
+        sk: Attr
+        value: Attr
 
     client.put_item(PydanticItem(id='ITEM#1', sk='0', value='A'))
     client.put_item(PydanticItem(id='ITEM#1', sk='1', value='B'))

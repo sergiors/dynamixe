@@ -1,12 +1,17 @@
 from dynamixe import ConfigDict, Model
 from dynamixe.client import DynamoDBClient
+from dynamixe.expressions import Attr
 
 
 class User(Model):
-    model_config = ConfigDict(table='pytest', partition_key='id', sort_key='sk')
-    id: str
-    sk: str
-    name: str
+    model_config = ConfigDict(
+        table='pytest',
+        partition_key='id',
+        sort_key='sk',
+    )
+    id: Attr
+    sk: Attr
+    name: Attr
 
 
 def test_query_with_between_on_sort_key(client: DynamoDBClient):

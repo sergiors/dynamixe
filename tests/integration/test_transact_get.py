@@ -1,6 +1,5 @@
-from dynamixe import ConfigDict, Model
-from dynamixe.client import DynamoDBClient
-from dynamixe.transact_get import TransactGet, TransactGetResult, get
+from dynamixe import Attr, ConfigDict, DynamoDBClient, Model, TransactGet
+from dynamixe.transact_get import TransactGetResult, get
 
 
 class User(Model):
@@ -9,10 +8,10 @@ class User(Model):
         partition_key='id',
         sort_key='sk',
     )
-    id: str
-    sk: str
-    name: str
-    email: str
+    id: Attr
+    sk: Attr
+    name: Attr
+    email: Attr
 
 
 def test_get_items_multiple_keys(client: DynamoDBClient, transact_get: TransactGet):

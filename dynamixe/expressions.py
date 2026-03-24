@@ -127,7 +127,7 @@ def _combine_exprs(left: Expression, right: Expression, op: str) -> Expression:
 T = TypeVar('T')
 
 
-class AttrDescriptor(Generic[T]):
+class Attr(Generic[T]):
     def __init__(self, name: str):
         self.name = name
 

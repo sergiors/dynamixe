@@ -2,16 +2,17 @@ import pytest
 
 from dynamixe import ConfigDict, Model, TransactionOperationFailed
 from dynamixe.client import DynamoDBClient
+from dynamixe.expressions import Attr
 from dynamixe.transact_writer import TransactWriter
 
 
 class User(Model):
     model_config = ConfigDict(table='pytest', partition_key='id', sort_key='sk')
-    id: str
-    sk: str
-    name: str
-    count: int = 0
-    status: str = 'inactive'
+    id: Attr
+    sk: Attr
+    name: Attr
+    count: Attr[int] = 0  # type: ignore[assignment]
+    status: Attr[str] = 'inactive'  # type: ignore[assignment]
 
 
 def test_transact_writer_put_multiple_items(
@@ -27,7 +28,9 @@ def test_transact_writer_put_multiple_items(
 
     result1 = client.get_item({'id': 'USER#1', 'sk': '0'})
     result2 = client.get_item({'id': 'USER#2', 'sk': '0'})
+    assert result1
     assert result1['name'] == 'Alice'
+    assert result2
     assert result2['name'] == 'Bob'
 
 
@@ -45,6 +48,7 @@ def test_transact_writer_put_with_expression_condition(
             )
 
     result = client.get_item({'id': 'USER#EXIST', 'sk': '0'})
+    assert result
     assert result['name'] == 'Existing'
 
 
@@ -91,12 +95,13 @@ def test_transact_writer_update_with_expression_condition(
         tx.update(
             {'id': 'USER#UPD', 'sk': '0'},
             update_expr='SET #name = :name',
-            cond_expr=User.count == 0,
+            cond_expr=User.count == 0,  # type: ignore[arg-type]
             expr_attr_names={'#name': 'name'},
             expr_attr_values={':name': 'Updated'},
         )
 
     result = client.get_item({'id': 'USER#UPD', 'sk': '0'})
+    assert result
     assert result['name'] == 'Updated'
 
 
@@ -111,12 +116,13 @@ def test_transact_writer_update_with_expression_fails(
             tx.update(
                 {'id': 'USER#NUD', 'sk': '0'},
                 update_expr='SET #name = :name',
-                cond_expr=User.count == 0,
+                cond_expr=User.count == 0,  # type: ignore[arg-type]
                 expr_attr_names={'#name': 'name'},
                 expr_attr_values={':name': 'Should Not Apply'},
             )
 
     result = client.get_item({'id': 'USER#NUD', 'sk': '0'})
+    assert result
     assert result['name'] == 'Keep'
 
 
@@ -160,6 +166,7 @@ def test_transact_writer_with_combined_expressions(
         )
 
     result = client.get_item({'id': 'USER#COMBO', 'sk': '0'})
+    assert result
     assert result['name'] == 'Combo Updated'
 
 
@@ -176,6 +183,7 @@ def test_transact_writer_with_or_expression(
         )
 
     result = client.get_item({'id': 'USER#OR', 'sk': '0'})
+    assert result
     assert result['name'] == 'Or Updated'
 
 
@@ -200,6 +208,7 @@ def test_transact_writer_with_custom_exception(
             )
 
     result = client.get_item({'id': 'USER#1', 'sk': '0'})
+    assert result
     assert result['name'] == 'Alice'
 
 
@@ -219,4 +228,5 @@ def test_transact_writer_pytest_expression_access(
         )
 
     result = client.get_item({'id': 'USER#EXPR', 'sk': '0'})
+    assert result
     assert result['name'] == 'Expr Updated'

@@ -1,8 +1,6 @@
-import pytest
-
 from dynamixe import ConfigDict, Model
 from dynamixe.client import DynamoDBClient
-from dynamixe.expressions import AttrExpression, Expression
+from dynamixe.expressions import Attr, AttrExpression, Expression
 
 
 class UserWithoutConfig(Model):
@@ -12,9 +10,9 @@ class UserWithoutConfig(Model):
 
 class UserWithConfig(Model):
     model_config = ConfigDict(table='pytest', partition_key='id', sort_key='sk')
-    id: str
-    sk: str
-    name: str
+    id: Attr
+    sk: Attr
+    name: Attr
 
 
 class UserWithMultipleAttrs(Model):
@@ -86,6 +84,7 @@ def test_model_put_item_with_dict(client: DynamoDBClient):
     client.put_item(item, cond_expr=UserWithConfig.sk.not_exists())
 
     stored = client.get_item({'id': 'USER#MODEL', 'sk': '0'})
+    assert stored
     assert stored['name'] == 'Model User'
 
 

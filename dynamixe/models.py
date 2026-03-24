@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, TypedDict
 
-from .expressions import AttrDescriptor
+from .expressions import Attr
 
 if TYPE_CHECKING:
     from .expressions import AttrExpression
@@ -50,7 +50,7 @@ class Model(metaclass=_ModelMeta):
         if hasattr(cls, '__annotations__'):
             for name in cls.__annotations__.keys():
                 if not name.startswith('_'):
-                    setattr(cls, name, AttrDescriptor(name))
+                    setattr(cls, name, Attr(name))
 
     @classmethod
     def get_table(cls) -> str:

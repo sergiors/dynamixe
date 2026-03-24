@@ -1,8 +1,8 @@
 import pytest
 
-from dynamixe import ConfigDict, Model
 from dynamixe.client import DynamoDBClient
-from dynamixe.expressions import Expression, extract_expression
+from dynamixe.expressions import Attr, Expression, extract_expression
+from dynamixe.models import ConfigDict, Model
 from dynamixe.transact_writer import (
     TransactionCanceledException,
     TransactionOperationFailed,
@@ -11,11 +11,15 @@ from dynamixe.transact_writer import (
 
 
 class User(Model):
-    model_config = ConfigDict(table='pytest', partition_key='id', sort_key='sk')
-    id: str
-    sk: str
-    name: str
-    count: int = 0
+    model_config = ConfigDict(
+        table='pytest',
+        partition_key='id',
+        sort_key='sk',
+    )
+    id: Attr
+    sk: Attr
+    name: Attr
+    count: Attr[int] = 0  # type: ignore[assignment]
 
 
 def test_transact_writer_flushes_buffer_on_exit(
@@ -28,6 +32,7 @@ def test_transact_writer_flushes_buffer_on_exit(
         tx.put(item)
 
     result = client.get_item({'id': 'USER#FLUSH', 'sk': '0'})
+    assert result
     assert result['name'] == 'Flush Test'
 
 
@@ -60,6 +65,7 @@ def test_transact_writer_put_fails_on_condition(
             )
 
     result = client.get_item({'id': 'USER#EXIST', 'sk': '0'})
+    assert result
     assert result['name'] == 'Existing'
 
 
@@ -98,6 +104,7 @@ def test_transact_writer_update_fails_on_condition(
             )
 
     result = client.get_item({'id': 'USER#UPD', 'sk': '0'})
+    assert result
     assert result['name'] == 'Original'
 
 
@@ -124,7 +131,14 @@ def test_transact_writer_success_with_expression_condition(
     client: DynamoDBClient,
     transact_writer: TransactWriter,
 ):
-    client.put_item({'id': 'USER#SUCCESS', 'sk': '0', 'name': 'Before', 'count': 0})
+    client.put_item(
+        {
+            'id': 'USER#SUCCESS',
+            'sk': '0',
+            'name': 'Before',
+            'count': 0,
+        }
+    )
 
     with transact_writer as tx:
         tx.update(
@@ -136,6 +150,7 @@ def test_transact_writer_success_with_expression_condition(
         )
 
     result = client.get_item({'id': 'USER#SUCCESS', 'sk': '0'})
+    assert result
     assert result['name'] == 'After'
 
 
@@ -152,6 +167,7 @@ def test_transact_writer_combined_and_condition(
         )
 
     result = client.get_item({'id': 'USER#AND', 'sk': '0'})
+    assert result
     assert result['name'] == 'And Updated'
 
 
@@ -169,10 +185,11 @@ def test_transact_writer_combined_or_condition(
         )
 
     result = client.get_item({'id': 'USER#OR', 'sk': '0'})
+    assert result
     assert result['name'] == 'Or Updated'
 
 
-def test_extract_expression_with_none(client: DynamoDBClient):
+def test_extract_expression_with_none():
     result = extract_expression(None, None, None)
     assert result == (None, None, None)
 

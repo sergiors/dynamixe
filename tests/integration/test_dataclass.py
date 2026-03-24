@@ -5,7 +5,7 @@ from botocore.exceptions import ClientError
 
 from dynamixe import ConfigDict
 from dynamixe.client import DynamoDBClient
-from dynamixe.expressions import AttrExpression
+from dynamixe.expressions import Attr, AttrExpression
 
 
 def test_dataclass_with_dynamodb_config(client: DynamoDBClient, settings):
@@ -16,9 +16,9 @@ def test_dataclass_with_dynamodb_config(client: DynamoDBClient, settings):
             partition_key=settings['partition_key'],
             sort_key=settings['sort_key'],
         )
-        id: str
-        sk: str
-        value: str
+        id: Attr
+        sk: Attr
+        value: Attr
 
     for name in User.__annotations__:
         if not name.startswith('_'):
@@ -31,6 +31,7 @@ def test_dataclass_with_dynamodb_config(client: DynamoDBClient, settings):
     )
 
     stored = client.get_item({'id': 'TEST#1', 'sk': '0'})
+    assert stored
     assert stored['value'] == 'test'
 
 
@@ -42,9 +43,9 @@ def test_dataclass_with_condition(client: DynamoDBClient, settings):
             partition_key=settings['partition_key'],
             sort_key=settings['sort_key'],
         )
-        id: str
-        sk: str
-        data: str
+        id: Attr
+        sk: Attr
+        data: Attr
 
     for name in Item.__annotations__:
         if not name.startswith('_'):

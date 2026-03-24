@@ -1,5 +1,5 @@
 from dynamixe import ConfigDict, Model
-from dynamixe.expressions import Expression
+from dynamixe.expressions import Attr, Expression
 
 
 class User(Model):
@@ -8,9 +8,9 @@ class User(Model):
         partition_key='id',
         sort_key='sk',
     )
-    id: str
-    sk: str
-    name: str
+    id: Attr
+    sk: Attr
+    name: Attr
 
 
 def test_equality():

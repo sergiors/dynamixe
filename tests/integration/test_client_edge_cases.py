@@ -2,11 +2,12 @@ import pytest
 
 from dynamixe import ConfigDict, Model
 from dynamixe.client import DynamoDBClient
+from dynamixe.expressions import Attr
 
 
 class User(Model):
     model_config = ConfigDict(table='pytest', partition_key='id', sort_key='sk')
-    id: str
+    id: Attr
     sk: str
     name: str
 
@@ -54,6 +55,7 @@ def test_get_item_with_projection_expression(client: DynamoDBClient):
         projection_expr='#name, #email',
         expr_attr_names={'#name': 'name', '#email': 'email'},
     )
+    assert result
     assert 'name' in result
     assert 'email' in result
     assert 'age' not in result

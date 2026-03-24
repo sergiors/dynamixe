@@ -17,6 +17,7 @@ class User:
 
 def test_dataclass_with_dynamodb_config():
     assert hasattr(User, '__dynamodb_config__')
-    assert User.__dynamodb_config__['table'] == 'users'
-    assert User.__dynamodb_config__['partition_key'] == 'id'
-    assert User.__dynamodb_config__['sort_key'] == 'sk'
+
+    assert User.__dynamodb_config__['table'] == 'users'  # type: ignore
+    assert User.__dynamodb_config__['partition_key'] == 'id'  # type: ignore
+    assert User.__dynamodb_config__['sort_key'] == 'sk'  # type: ignore
