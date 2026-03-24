@@ -8,8 +8,7 @@ from typing import TYPE_CHECKING, Any, Self, TypedDict, TypeVar
 
 import boto3
 
-from dynamixe._jmespath import JMESPathMixin
-
+from ._jmespath import JMESPathMixin
 from .expressions import Expression, extract_expression
 from .transact_get import TransactGet
 from .transact_writer import TransactWriter

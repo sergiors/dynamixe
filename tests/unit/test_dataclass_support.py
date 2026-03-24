@@ -16,7 +16,6 @@ class User:
 
 
 def test_dataclass_with_dynamodb_config():
-    # Dataclasses use __dynamodb_config__ directly (not inherited from Model)
     assert hasattr(User, '__dynamodb_config__')
     assert User.__dynamodb_config__['table'] == 'users'
     assert User.__dynamodb_config__['partition_key'] == 'id'

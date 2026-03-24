@@ -60,7 +60,6 @@ def test_transact_writer_delete_with_expression_condition(
             cond_expr=User.id == 'USER#DEL',
         )
 
-    # get_item raises Exception when item not found
     with pytest.raises(Exception):
         client.get_item({'id': 'USER#DEL', 'sk': '0'})
 
@@ -88,7 +87,6 @@ def test_transact_writer_update_with_expression_condition(
 ):
     client.put_item({'id': 'USER#UPD', 'sk': '0', 'name': 'Original', 'count': 0})
 
-    # Update with expression condition
     with transact_writer as tx:
         tx.update(
             {'id': 'USER#UPD', 'sk': '0'},
@@ -209,11 +207,9 @@ def test_transact_writer_pytest_expression_access(
     client: DynamoDBClient,
     transact_writer: TransactWriter,
 ):
-    """Test that expression access via model attributes works correctly."""
     expr = User.id
     assert expr.attr_name == 'id'
 
-    # Use the expression in a condition
     client.put_item({'id': 'USER#EXPR', 'sk': '0', 'name': 'Expr Test'})
 
     with transact_writer as tx:

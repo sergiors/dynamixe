@@ -18,7 +18,6 @@ def test_pydantic_with_expression_condition(client, settings):
 
     user = PydanticUser(id='PYDANTIC#1', sk='0', name='Pydantic User')
 
-    # Use Model class for expression (Pydantic doesn't have descriptors)
     class User(Model):
         model_config = ConfigDict(
             table=settings['table_name'],

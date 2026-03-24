@@ -132,11 +132,9 @@ def test_delete_item_with_condition(client: DynamoDBClient):
             cond_expr=User.sk.not_exists(),
         )
 
-    # Item should still exist (condition failed)
     stored = client.get_item({'id': 'USER#DEL_COND', 'sk': '0'}, raise_on_error=False)
     assert stored is not None
 
-    # Delete with passing condition
     result = client.delete_item(
         {'id': 'USER#DEL_COND', 'sk': '0'},
         cond_expr=User.id == 'USER#DEL_COND',

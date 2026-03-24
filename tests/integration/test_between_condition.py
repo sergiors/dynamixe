@@ -10,14 +10,12 @@ class User(Model):
 
 
 def test_query_with_between_on_sort_key(client: DynamoDBClient):
-    # Create items with different sort keys (zero-padded for lexicographic ordering)
     client.put_item({'id': 'USER#1', 'sk': '00', 'name': 'Zero'})
     client.put_item({'id': 'USER#1', 'sk': '10', 'name': 'Alice'})
     client.put_item({'id': 'USER#1', 'sk': '20', 'name': 'Bob'})
     client.put_item({'id': 'USER#1', 'sk': '30', 'name': 'Charlie'})
     client.put_item({'id': 'USER#1', 'sk': '50', 'name': 'Eve'})
 
-    # Query with between condition on sort key (inclusive on both bounds)
     result = client.query(
         (User.id == 'USER#1') & (User.sk.between('10', '30')),
     )

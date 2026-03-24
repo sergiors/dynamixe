@@ -90,6 +90,11 @@ def not_exists(self) -> Expression:
 -   Functions → snake_case
 -   Private → `_helper`
 
+### Comments
+
+-   Avoid obvious comments (code should be self-explanatory)
+-   Add comments only where behavior is non-obvious or not immediately clear from the code
+
 ---
 
 ## 🧪 Testing (MANDATORY)
@@ -105,6 +110,7 @@ uv run pytest tests/ -v
 -   Add tests for every change
 -   Do not ship failing tests
 -   Prefer function-based tests
+-   Avoid unnecessary comments in tests
 
 Example:
 

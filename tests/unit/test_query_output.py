@@ -32,4 +32,4 @@ def test_query_output_dict_methods():
     assert list(output.keys()) == ['items', 'count', 'last_key']
     assert 'items' in output
     assert output.get('count') == 1
-    assert len(output) == 3  # 3 keys in dict
+    assert len(output) == 3
