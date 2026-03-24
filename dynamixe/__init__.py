@@ -1,6 +1,6 @@
-from .client import ConfigDict, DynamoDBClient
+from .client import DynamoDBClient
 from .expressions import AttrExpression, Expression
-from .models import Model
+from .models import ConfigDict, Model
 from .transact_get import TransactGet
 from .transact_writer import (
     TransactionCanceledException,

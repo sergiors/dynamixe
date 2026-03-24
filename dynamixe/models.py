@@ -1,12 +1,19 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypedDict
 
-from .client import ConfigDict, _get_dynamodb_config
 from .expressions import AttrDescriptor
 
 if TYPE_CHECKING:
     from .expressions import AttrExpression
+
+
+class ConfigDict(TypedDict, total=False):
+    """Configuration for DynamoDB mapping."""
+
+    table: str
+    partition_key: str | None
+    sort_key: str | None
 
 
 class _ModelMeta(type):
@@ -33,7 +40,6 @@ class Model(metaclass=_ModelMeta):
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
 
-        # Get config from model_config or __dynamodb_config__
         config = _get_dynamodb_config(cls)
         if config:
             cls.model_config = config
@@ -60,3 +66,17 @@ class Model(metaclass=_ModelMeta):
     def get_sort_key(cls) -> str | None:
         """Get the sort key attribute name."""
         return cls.model_config.get('sort_key') if cls.model_config else None
+
+
+def _get_dynamodb_config(obj: Any) -> ConfigDict | None:
+    """Extract DynamoDB config from model_config or __dynamodb_config__."""
+    model_config = getattr(obj, 'model_config', None)
+
+    if model_config and isinstance(model_config, dict) and 'table' in model_config:
+        return ConfigDict(
+            table=model_config.get('table', ''),
+            partition_key=model_config.get('partition_key'),
+            sort_key=model_config.get('sort_key'),
+        )
+
+    return getattr(obj, '__dynamodb_config__', None)

@@ -4,12 +4,13 @@ import base64
 import json
 import urllib.parse as parse
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Self, TypedDict, TypeVar
+from typing import TYPE_CHECKING, Any, Self, TypeVar
 
 import boto3
 
 from ._jmespath import JMESPathMixin
 from .expressions import Expression, extract_expression
+from .models import _get_dynamodb_config
 from .transact_get import TransactGet
 from .transact_writer import TransactWriter
 from .types import deserialize, serialize, to_dict
@@ -23,14 +24,6 @@ if TYPE_CHECKING:
     )
 
 T = TypeVar('T')
-
-
-class ConfigDict(TypedDict, total=False):
-    """Configuration for DynamoDB mapping."""
-
-    table: str
-    partition_key: str | None
-    sort_key: str | None
 
 
 class ItemOutput(dict, JMESPathMixin):
@@ -51,20 +44,6 @@ class QueryOutput(dict, JMESPathMixin):
     @property
     def jmespath_target(self) -> list[dict[str, Any]]:
         return self['items']
-
-
-def _get_dynamodb_config(obj: Any) -> ConfigDict | None:
-    """Extract DynamoDB config from model_config or __dynamodb_config__."""
-    model_config = getattr(obj, 'model_config', None)
-
-    if model_config and isinstance(model_config, dict) and 'table' in model_config:
-        return ConfigDict(
-            table=model_config.get('table', ''),
-            partition_key=model_config.get('partition_key'),
-            sort_key=model_config.get('sort_key'),
-        )
-
-    return getattr(obj, '__dynamodb_config__', None)
 
 
 class DynamoDBClient:
