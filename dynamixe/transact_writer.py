@@ -262,8 +262,8 @@ class TransactWriter:
                 reasons.append(cancellation_reason)
 
             raise TransactionCanceledException(reasons) from err
-        else:
-            return True
+
+        return True
 
 
 def _build_tx_exception(

@@ -1,5 +1,10 @@
-up:
-	docker compose up -d
+.PHONY: build publish test-publish clean
 
-down:
-	docker compose down
+build:
+	uv build
+
+clean:
+	rm -rf dist/ build/ *.egg-info
+
+test-publish: build
+	uv publish --publish-url https://test.pypi.org/legacy/
